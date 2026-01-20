@@ -95,7 +95,7 @@ export {
   renderHtmlPresentationToString,
   getHtmlPresentationSummary,
 } from './renderers/html/index.js';
-export type { HtmlOptions } from './renderers/html/types.js';
+export type { HtmlOptions } from './renderers/html/index.js';
 
 // Speaker Notes Renderer
 export {
@@ -103,7 +103,7 @@ export {
   renderSpeakerNotesToString,
   getSpeakerNotesSummary,
 } from './renderers/notes/index.js';
-export type { NotesOptions } from './renderers/notes/types.js';
+export type { NotesOptions } from './renderers/notes/index.js';
 
 // Video Renderer
 export {
