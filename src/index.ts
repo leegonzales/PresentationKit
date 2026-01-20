@@ -43,7 +43,7 @@ export type {
   SemanticTagType,
   BrandConfig,
   ParseResult,
-} from './parsers/types.js';
+} from './parsers/index.js';
 
 // Audio Generators
 export {
@@ -87,7 +87,7 @@ export type {
   TimelineSlide,
   Caption,
   TimelineOptions,
-} from './generators/timeline/types.js';
+} from './generators/timeline/index.js';
 
 // HTML Renderer
 export {
