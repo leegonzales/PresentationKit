@@ -1311,6 +1311,7 @@ function generateScript(
         let showRehearsalStats = false;
         let slideStartTime = 0;
         let slideTimes = [];
+        let presenterViewWindow = null;
         let presentationRunning = false;
         let autoAdvance = true;
         let timerInterval = null;
@@ -1982,7 +1983,7 @@ function generateScript(
 
         function updateRehearsalDisplay() {
             if (!showRehearsalStats) return;
-            rehearsalTimes.innerHTML = '';
+            rehearsalTimes.replaceChildren();
             slides.forEach((slide, idx) => {
                 const time = slideTimes[idx] || 0;
                 const item = document.createElement('div');
@@ -2010,8 +2011,8 @@ function generateScript(
         }
 
         function openPresenterView() {
-            const pvWindow = window.open('', 'PresenterView', 'width=800,height=600');
-            if (!pvWindow) {
+            presenterViewWindow = window.open('', 'PresenterView', 'width=800,height=600');
+            if (!presenterViewWindow) {
                 alert('Presenter view blocked. Please allow popups for this site.');
                 return;
             }
@@ -2061,16 +2062,22 @@ function generateScript(
                             document.getElementById('pvTimer').textContent = data.timer;
                             document.getElementById('pvTimer').style.color = data.timerColor;
                         };
+                        // Clean up on close
+                        window.addEventListener('beforeunload', () => {
+                            if (window.opener) {
+                                window.opener.presenterViewUpdate = null;
+                            }
+                        });
                     <\/script>
                 </body>
                 </html>
             \`);
-            pvWindow.document.close();
+            presenterViewWindow.document.close();
             updatePresenterView();
         }
 
         function updatePresenterView() {
-            if (window.presenterViewUpdate) {
+            if (presenterViewWindow && !presenterViewWindow.closed && window.presenterViewUpdate) {
                 const slide = slides[currentIndex];
                 const nextSlide = slides[currentIndex + 1];
                 // Escape notes then convert newlines to paragraphs
