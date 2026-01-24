@@ -1883,6 +1883,10 @@ function generateScript(
         annotationCanvas.addEventListener('mousedown', (e) => {
             if (!showAnnotation) return;
             isDrawing = true;
+            ctx.strokeStyle = annotationColor;
+            ctx.lineWidth = annotationSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
             ctx.beginPath();
             ctx.moveTo(e.clientX, e.clientY);
         });
@@ -1890,10 +1894,6 @@ function generateScript(
         annotationCanvas.addEventListener('mousemove', (e) => {
             if (!isDrawing || !showAnnotation) return;
             ctx.lineTo(e.clientX, e.clientY);
-            ctx.strokeStyle = annotationColor;
-            ctx.lineWidth = annotationSize;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
             ctx.stroke();
         });
 
@@ -1981,23 +1981,45 @@ function generateScript(
 
         function updateRehearsalDisplay() {
             if (!showRehearsalStats) return;
-            rehearsalTimes.innerHTML = slides.map((slide, idx) => {
+            rehearsalTimes.innerHTML = '';
+            slides.forEach((slide, idx) => {
                 const time = slideTimes[idx] || 0;
-                return '<div class="rehearsal-slide-time">' +
-                    '<span class="rehearsal-slide-name">' + (idx + 1) + '. ' + slide.title + '</span>' +
-                    '<span class="rehearsal-slide-duration">' + formatTime(Math.round(time)) + '</span>' +
-                '</div>';
-            }).join('');
+                const item = document.createElement('div');
+                item.className = 'rehearsal-slide-time';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'rehearsal-slide-name';
+                nameSpan.textContent = (idx + 1) + '. ' + slide.title;
+
+                const durationSpan = document.createElement('span');
+                durationSpan.className = 'rehearsal-slide-duration';
+                durationSpan.textContent = formatTime(Math.round(time));
+
+                item.append(nameSpan, durationSpan);
+                rehearsalTimes.appendChild(item);
+            });
         }
 
         // === PRESENTER VIEW ===
+        // HTML escape for presenter view content
+        function escapeHtmlForPv(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function openPresenterView() {
             const pvWindow = window.open('', 'PresenterView', 'width=800,height=600');
+            if (!pvWindow) {
+                alert('Presenter view blocked. Please allow popups for this site.');
+                return;
+            }
+            const safeTitle = escapeHtmlForPv(metadata.title);
             pvWindow.document.write(\`
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Presenter View - \${metadata.title}</title>
+                    <title>Presenter View - \${safeTitle}</title>
                     <style>
                         body { font-family: system-ui; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
                         .pv-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; height: calc(100vh - 40px); }
@@ -2050,10 +2072,14 @@ function generateScript(
             if (window.presenterViewUpdate) {
                 const slide = slides[currentIndex];
                 const nextSlide = slides[currentIndex + 1];
+                // Escape notes then convert newlines to paragraphs
+                const safeNotes = slide.notes
+                    ? '<p>' + escapeHtmlForPv(slide.notes).replace(/\\n/g, '</p><p>') + '</p>'
+                    : null;
                 window.presenterViewUpdate({
                     currentImage: slide.image,
                     nextImage: nextSlide ? nextSlide.image : null,
-                    notes: slide.notes ? '<p>' + slide.notes.replace(/\\n/g, '</p><p>') + '</p>' : null,
+                    notes: safeNotes,
                     timer: formatTime(elapsedSeconds),
                     timerColor: elapsedSeconds > targetSeconds ? '#f44336' :
                                elapsedSeconds > targetSeconds * 0.9 ? '#FFC107' : '#557373'
@@ -2118,22 +2144,22 @@ function generateScript(
             }
 
             // Don't capture if help is visible
-            if (showHelp && e.key !== 'Escape' && e.key !== 'h' && e.key !== 'H' && e.key !== '?') {
+            if (showHelp && !['Escape', 'h', 'H', '?'].includes(e.key)) {
                 return;
             }
 
             // Don't capture if grid is visible (except Escape and G)
-            if (showGrid && e.key !== 'Escape' && e.key !== 'g' && e.key !== 'G') {
+            if (showGrid && !['Escape', 'g', 'G'].includes(e.key)) {
                 return;
             }
 
             // Don't capture if blank screen is visible (except B, W, Escape)
-            if (showBlankScreen && e.key !== 'Escape' && e.key !== 'b' && e.key !== 'B' && e.key !== 'w' && e.key !== 'W') {
+            if (showBlankScreen && !['Escape', 'b', 'B', 'w', 'W'].includes(e.key)) {
                 return;
             }
 
             // Don't capture if annotation mode (except A and Escape)
-            if (showAnnotation && e.key !== 'Escape' && e.key !== 'a' && e.key !== 'A') {
+            if (showAnnotation && !['Escape', 'a', 'A'].includes(e.key)) {
                 return;
             }
 
@@ -2579,7 +2605,7 @@ export function generateHtmlPresentation(
     <div class="laser-pointer" id="laserPointer"></div>
 
     <!-- Annotation Canvas -->
-    <canvas class="annotation-canvas" id="annotationCanvas"></canvas>
+    <canvas class="annotation-canvas" id="annotationCanvas">Your browser does not support the canvas element for annotations.</canvas>
     <div class="annotation-toolbar" id="annotationToolbar">
         <div class="annotation-color active" style="background: #ff0000" data-color="#ff0000"></div>
         <div class="annotation-color" style="background: #00ff00" data-color="#00ff00"></div>
@@ -2587,7 +2613,7 @@ export function generateHtmlPresentation(
         <div class="annotation-color" style="background: #ffff00" data-color="#ffff00"></div>
         <div class="annotation-color" style="background: #ffffff" data-color="#ffffff"></div>
         <div class="annotation-size">
-            <span>Size:</span>
+            <label for="annotationSize">Size:</label>
             <input type="range" id="annotationSize" min="2" max="20" value="4">
         </div>
         <button class="annotation-btn" id="annotationClear">Clear</button>
