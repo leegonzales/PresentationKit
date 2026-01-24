@@ -6,11 +6,13 @@
  */
 
 import { Command } from 'commander';
-import { resolve, dirname, join } from 'node:path';
+import { resolve, dirname } from 'node:path';
 import { mkdir, readFile } from 'node:fs/promises';
 
-import type { AudioProvider, KokoroVoice } from '../../generators/audio/types.js';
-import { KOKORO_VOICES } from '../../generators/audio/types.js';
+import type { AudioProvider, KokoroVoice, VoiceConfig } from '../../generators/audio/types.js';
+import { KOKORO_VOICES, DEFAULT_MULTI_VOICES } from '../../generators/audio/types.js';
+import { generateKokoroAudio, generateMultiVoiceKokoroAudio } from '../../generators/audio/kokoro.js';
+import { parseTalkTrack } from '../../parsers/talk-track.js';
 import {
   ProgressSpinner,
   printHeader,
@@ -24,6 +26,7 @@ import {
 
 interface AudioOptions {
   voice: string;
+  voices?: string;
   provider: string;
   outputDir?: string;
   format: string;
@@ -44,6 +47,10 @@ export function registerAudioCommand(program: Command): void {
       'af_heart'
     )
     .option(
+      '--voices <voices>',
+      'Multi-voice config: name1:voice_id1,name2:voice_id2 (e.g., George:bm_george,Emma:bf_emma)'
+    )
+    .option(
       '-p, --provider <provider>',
       'TTS provider (kokoro or elevenlabs)',
       'kokoro'
@@ -59,6 +66,32 @@ export function registerAudioCommand(program: Command): void {
     )
     .option('-v, --verbose', 'Enable verbose output')
     .action(audioAction);
+}
+
+/**
+ * Parse multi-voice configuration string.
+ * Format: name1:voice_id1,name2:voice_id2
+ */
+function parseVoicesOption(voicesStr: string): VoiceConfig[] {
+  const voices: VoiceConfig[] = [];
+  const pairs = voicesStr.split(',');
+
+  for (const pair of pairs) {
+    const [name, voiceId] = pair.split(':').map((s) => s.trim());
+    if (name && voiceId) {
+      voices.push({ name, voiceId });
+    } else {
+      throw new Error(
+        `Invalid voice config: '${pair}'. Expected format: name:voice_id`
+      );
+    }
+  }
+
+  if (voices.length === 0) {
+    throw new Error('No valid voice configurations found');
+  }
+
+  return voices;
 }
 
 /**
@@ -82,9 +115,21 @@ async function audioAction(
     const provider = validateProvider(options.provider);
     const format = validateFormat(options.format);
 
-    // Validate voice for Kokoro provider
+    // Parse multi-voice configuration
+    const voices = options.voices
+      ? parseVoicesOption(options.voices)
+      : null;
+    const isMultiVoice = voices !== null && voices.length > 0;
+
+    // Validate voice(s) for Kokoro provider
     if (provider === 'kokoro') {
-      validateKokoroVoice(options.voice);
+      if (isMultiVoice) {
+        for (const v of voices) {
+          validateKokoroVoice(v.voiceId);
+        }
+      } else {
+        validateKokoroVoice(options.voice);
+      }
     }
 
     // Determine output directory
@@ -100,64 +145,88 @@ async function audioAction(
     printKeyValue('Source', absolutePath);
     printKeyValue('Output Directory', outputDir);
     printKeyValue('Provider', provider);
-    printKeyValue('Voice', options.voice);
-    printKeyValue('Format', format);
 
-    if (provider === 'kokoro' && options.voice in KOKORO_VOICES) {
-      printKeyValue(
-        'Voice Description',
-        KOKORO_VOICES[options.voice as KokoroVoice]
-      );
+    if (isMultiVoice) {
+      printKeyValue('Mode', 'Multi-voice');
+      for (const v of voices) {
+        printKeyValue(`  ${v.name}`, v.voiceId);
+      }
+    } else {
+      printKeyValue('Voice', options.voice);
+      if (options.voice in KOKORO_VOICES) {
+        printKeyValue(
+          'Voice Description',
+          KOKORO_VOICES[options.voice as KokoroVoice]
+        );
+      }
     }
+    printKeyValue('Format', format);
     console.log();
 
-    // Start audio generation
+    // Parse talk track
     spinner.start('Parsing talk track...');
-
-    // TODO: Integrate with actual parser and audio generator
-    // For now, we simulate the process
     const sourceContent = await readFile(absolutePath, 'utf-8');
+    const talkTrack = parseTalkTrack(sourceContent);
+    const slides = Array.from(talkTrack.slideContent.values());
 
     spinner.update('Extracting audio text from slides...');
 
-    // Extract slide count (basic heuristic for progress)
-    const slideMatches = sourceContent.match(/^## /gm);
-    const estimatedSlides = slideMatches ? slideMatches.length : 1;
-
-    spinner.update(`Generating audio for ${estimatedSlides} slides...`);
-
-    // TODO: Replace with actual implementation
-    // const { generateAudio } = await import('../../generators/audio/index.js');
-    // const { parseTalkTrack } = await import('../../parsers/talk-track.js');
-    //
-    // const parseResult = await parseTalkTrack(absolutePath);
-    // if (!parseResult.success) {
-    //   throw new Error(`Parse error: ${parseResult.errors?.join(', ')}`);
-    // }
-    //
-    // const slides = Array.from(parseResult.data!.slideContent.values());
-    // const manifest = await generateAudio(slides, {
-    //   provider,
-    //   voice: options.voice,
-    //   outputDir,
-    //   format,
-    // });
-
-    // Placeholder: simulate success
-    spinner.succeed('Audio generation complete!');
-
-    const elapsed = Date.now() - startTime;
-
-    printSection('Results');
-    printKeyValue('Audio Files', `${estimatedSlides} files generated`);
-    printKeyValue('Output Directory', outputDir);
-    printKeyValue('Duration', formatDuration(elapsed));
-
+    // Generate audio
     if (provider === 'kokoro') {
-      printKeyValue('Cost', 'Free (local Kokoro TTS)');
+      if (isMultiVoice) {
+        spinner.update(`Generating audio for ${slides.length} slides (${voices.length} voices)...`);
+
+        const manifest = await generateMultiVoiceKokoroAudio(slides, {
+          outputDir,
+          voices,
+          onProgress: (voiceName, slideSlug, progress) => {
+            spinner.update(
+              `[${voiceName}] Generating: ${slideSlug} (${Math.round(progress * 100)}%)`
+            );
+          },
+        });
+
+        spinner.succeed('Audio generation complete!');
+
+        const elapsed = Date.now() - startTime;
+
+        printSection('Results');
+        for (const [voiceName, voiceManifest] of Object.entries(manifest.voiceManifests)) {
+          printKeyValue(
+            `${voiceName.charAt(0).toUpperCase() + voiceName.slice(1)} Audio`,
+            `${voiceManifest.slides.length} files, ${Math.round(voiceManifest.totalDurationSecs)}s`
+          );
+        }
+        printKeyValue('Total Characters', manifest.totalCharacters.toLocaleString());
+        printKeyValue('Output Directory', outputDir);
+        printKeyValue('Duration', formatDuration(elapsed));
+        printKeyValue('Cost', 'Free (local Kokoro TTS)');
+      } else {
+        spinner.update(`Generating audio for ${slides.length} slides...`);
+
+        const manifest = await generateKokoroAudio(slides, {
+          outputDir,
+          voice: options.voice,
+          onProgress: (slideSlug, progress) => {
+            spinner.update(`Generating: ${slideSlug} (${Math.round(progress * 100)}%)`);
+          },
+        });
+
+        spinner.succeed('Audio generation complete!');
+
+        const elapsed = Date.now() - startTime;
+
+        printSection('Results');
+        printKeyValue('Audio Files', `${manifest.slides.length} files`);
+        printKeyValue('Total Duration', `${Math.round(manifest.totalDurationSecs)}s`);
+        printKeyValue('Total Characters', manifest.totalCharacters.toLocaleString());
+        printKeyValue('Output Directory', outputDir);
+        printKeyValue('Duration', formatDuration(elapsed));
+        printKeyValue('Cost', 'Free (local Kokoro TTS)');
+      }
     } else {
-      // TODO: Calculate actual ElevenLabs cost from manifest
-      printKeyValue('Cost', 'See cost report for details');
+      // ElevenLabs support is TODO
+      throw new Error('ElevenLabs provider not yet implemented for CLI');
     }
 
     printSuccess(`Audio generated in ${outputDir}`);

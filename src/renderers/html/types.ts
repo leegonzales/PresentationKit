@@ -50,6 +50,18 @@ export const DEFAULT_HTML_OPTIONS: Required<HtmlOptions> = {
 };
 
 /**
+ * Voice audio configuration for a slide.
+ */
+export interface VoiceAudio {
+  /** Voice display name */
+  name: string;
+  /** Path to audio file for this voice */
+  audioPath: string;
+  /** Audio duration in seconds */
+  audioDuration: number;
+}
+
+/**
  * Prepared slide data for HTML presentation rendering.
  */
 export interface PreparedHtmlSlide {
@@ -65,10 +77,12 @@ export interface PreparedHtmlSlide {
   section: string;
   /** Section color (hex) */
   sectionColor: string;
-  /** Path to audio file (null if no audio) */
+  /** Path to audio file (null if no audio) - for single voice */
   audioPath: string | null;
-  /** Audio duration in seconds (0 if no audio) */
+  /** Audio duration in seconds (0 if no audio) - for single voice */
   audioDuration: number;
+  /** Multi-voice audio paths (null if single voice or no audio) */
+  voiceAudio?: VoiceAudio[];
   /** Cleaned speaker notes for display */
   speakerNotes?: string;
   /** Whether this is an appendix slide */

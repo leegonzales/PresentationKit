@@ -121,3 +121,35 @@ export const KOKORO_VOICES = {
 } as const;
 
 export type KokoroVoice = keyof typeof KOKORO_VOICES;
+
+/**
+ * Voice configuration for multi-voice audio generation.
+ * Maps a display name to a Kokoro voice ID.
+ */
+export interface VoiceConfig {
+  /** Display name for the voice (e.g., "George", "Emma") */
+  name: string;
+  /** Kokoro voice ID (e.g., "bm_george", "bf_emma") */
+  voiceId: KokoroVoice | string;
+}
+
+/**
+ * Multi-voice audio manifest.
+ * Contains audio paths for each configured voice.
+ */
+export interface MultiVoiceAudioManifest {
+  /** Array of voice configurations used */
+  voices: VoiceConfig[];
+  /** Per-voice audio manifests keyed by voice name (lowercase) */
+  voiceManifests: Record<string, AudioManifest>;
+  /** Total characters processed (same for all voices) */
+  totalCharacters: number;
+}
+
+/**
+ * Default multi-voice configuration: George and Emma.
+ */
+export const DEFAULT_MULTI_VOICES: VoiceConfig[] = [
+  { name: 'George', voiceId: 'bm_george' },
+  { name: 'Emma', voiceId: 'bf_emma' },
+];

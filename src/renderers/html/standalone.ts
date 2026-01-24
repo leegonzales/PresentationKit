@@ -28,6 +28,16 @@ import { stripSemanticTags, getSectionColor, getSectionName, escapeHtml, escapeJ
 import { resolveImagePath } from '../../utils/asset-copier.js';
 
 /**
+ * Voice configuration for multi-voice support.
+ */
+export interface VoiceConfig {
+  /** Display name for the voice (e.g., "George", "Emma") */
+  name: string;
+  /** Directory name containing the voice audio files */
+  directory: string;
+}
+
+/**
  * Options for standalone HTML rendering.
  */
 export interface StandaloneHtmlOptions {
@@ -39,12 +49,14 @@ export interface StandaloneHtmlOptions {
   enableAutoAdvance?: boolean;
   /** Callback for progress updates */
   onProgress?: (message: string, progress: number) => void;
+  /** Multi-voice configuration (if provided, enables voice toggle) */
+  voices?: VoiceConfig[];
 }
 
 /**
  * Default options for standalone HTML rendering.
  */
-const DEFAULT_OPTIONS: Required<Omit<StandaloneHtmlOptions, 'onProgress'>> = {
+const DEFAULT_OPTIONS: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voices'>> = {
   primaryColor: '#557373',
   mp3Bitrate: '64k',
   enableAutoAdvance: true,
@@ -145,6 +157,8 @@ interface PreparedStandaloneSlide {
   sectionColor: string;
   imageDataUri: string;
   audioDataUri: string;
+  /** Multi-voice audio data URIs keyed by voice name (lowercase) */
+  voiceAudioDataUris: Record<string, string>;
   notes: string;
 }
 
@@ -156,6 +170,7 @@ interface PreparedStandaloneSlide {
  * @param sourceDir - Directory for resolving image paths (talk track location)
  * @param audioBaseDir - Directory for resolving audio paths (output directory)
  * @param options - Rendering options
+ * @param voices - Optional voice configurations for multi-voice
  * @param onProgress - Progress callback
  */
 async function prepareSlides(
@@ -163,7 +178,8 @@ async function prepareSlides(
   timeline: Timeline | null,
   sourceDir: string,
   audioBaseDir: string,
-  options: Required<Omit<StandaloneHtmlOptions, 'onProgress'>>,
+  options: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voices'>>,
+  voices?: VoiceConfig[],
   onProgress?: (message: string, progress: number) => void,
 ): Promise<PreparedStandaloneSlide[]> {
   const slides: PreparedStandaloneSlide[] = [];
@@ -208,7 +224,29 @@ async function prepareSlides(
     // Resolve and embed audio (convert WAV to MP3)
     // Audio paths are relative to the output directory (audioBaseDir), not sourceDir
     let audioDataUri = '';
-    if (timelineSlide?.audioPath) {
+    const voiceAudioDataUris: Record<string, string> = {};
+
+    if (voices && voices.length > 0) {
+      // Multi-voice: process audio from each voice directory
+      for (const voice of voices) {
+        const voiceName = voice.name.toLowerCase();
+        const audioFilename = `${slideDef.slug}.wav`;
+        const audioPath = join(audioBaseDir, voice.directory, audioFilename);
+
+        const mp3Data = await wavToMp3Base64(audioPath, options.mp3Bitrate);
+        if (mp3Data) {
+          voiceAudioDataUris[voiceName] = `data:audio/mpeg;base64,${mp3Data}`;
+          const sizeKb = Math.round(mp3Data.length * 0.75 / 1024);
+          console.log(`  [MP3] ${voice.name}/${audioFilename} -> MP3 (${sizeKb}KB)`);
+        } else {
+          console.warn(`  [WARN] Missing ${voice.name} audio: ${audioPath}`);
+        }
+      }
+      // Use first voice as default
+      const firstVoice = voices[0].name.toLowerCase();
+      audioDataUri = voiceAudioDataUris[firstVoice] || '';
+    } else if (timelineSlide?.audioPath) {
+      // Single voice: use timeline audio path
       const audioPath = isAbsolute(timelineSlide.audioPath)
         ? timelineSlide.audioPath
         : join(audioBaseDir, timelineSlide.audioPath);
@@ -234,6 +272,7 @@ async function prepareSlides(
       sectionColor,
       imageDataUri,
       audioDataUri,
+      voiceAudioDataUris,
       notes: escapeJs(notes),
     });
   }
@@ -247,10 +286,22 @@ async function prepareSlides(
 function generateStandaloneHtml(
   title: string,
   slides: PreparedStandaloneSlide[],
-  options: Required<Omit<StandaloneHtmlOptions, 'onProgress'>>,
+  options: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voices'>>,
+  voices?: VoiceConfig[],
 ): string {
+  const hasMultiVoice = voices && voices.length > 0;
+  const voiceNames = voices?.map(v => v.name) || [];
+
   const slideDataEntries = slides.map((slide) => {
-    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', notes: '${slide.notes}' }`;
+    // Generate voice audio object if multi-voice is present
+    let voiceAudioJs = 'null';
+    if (hasMultiVoice && Object.keys(slide.voiceAudioDataUris).length > 0) {
+      const voiceEntries = Object.entries(slide.voiceAudioDataUris).map(([name, dataUri]) => {
+        return `'${name}': '${dataUri}'`;
+      });
+      voiceAudioJs = `{ ${voiceEntries.join(', ')} }`;
+    }
+    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', voiceAudio: ${voiceAudioJs}, notes: '${slide.notes}' }`;
   });
   const slideData = slideDataEntries.join(',\n');
 
@@ -534,6 +585,41 @@ function generateStandaloneHtml(
             border-radius: 4px;
             font-family: monospace;
         }
+        .voice-toggle {
+            display: flex;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .voice-btn {
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .voice-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .voice-toggle-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+            display: flex;
+            align-items: center;
+        }
         .standalone-badge {
             position: fixed;
             bottom: 80px;
@@ -586,6 +672,15 @@ function generateStandaloneHtml(
                 </div>
             </div>
 
+            ${hasMultiVoice ? `
+            <div class="control-group">
+                <span class="voice-toggle-label">Voice:</span>
+                <div class="voice-toggle" id="voiceToggle">
+                    ${voiceNames.map((name, i) => `<button class="voice-btn${i === 0 ? ' active' : ''}" data-voice="${name.toLowerCase()}" title="${name} (Shift+${name.charAt(0).toUpperCase()})">${name}</button>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+
             <div class="control-group">
                 <button class="btn" id="btnAutoAdvance" title="Auto-advance (Y)">&#8634;</button>
                 <button class="btn" id="btnNotes" title="Speaker notes (N)">&#128221;</button>
@@ -621,6 +716,9 @@ function generateStandaloneHtml(
 ${slideData}
         ];
 
+        const hasMultiVoice = ${hasMultiVoice};
+        const voiceNames = ${JSON.stringify(voiceNames.map(v => v.toLowerCase()))};
+        let currentVoice = voiceNames.length > 0 ? voiceNames[0] : null;
         let currentSlideIndex = 0;
         let isPlaying = false;
         let autoAdvance = false;
@@ -741,8 +839,39 @@ ${slideData}
             if (index >= 0 && index < slides.length) showSlide(index);
         }
 
+        function getSlideAudio(slide) {
+            if (hasMultiVoice && slide.voiceAudio && currentVoice) {
+                return slide.voiceAudio[currentVoice] || slide.audio;
+            }
+            return slide.audio;
+        }
+
+        function switchVoice(voiceName) {
+            const wasPlaying = !audio.paused;
+            const currentTime = audio.currentTime;
+            currentVoice = voiceName.toLowerCase();
+
+            // Update voice toggle buttons
+            document.querySelectorAll('.voice-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.voice === currentVoice);
+            });
+
+            // If audio was playing, switch to new voice track at same position
+            if (wasPlaying || currentTime > 0) {
+                const slide = slides[currentSlideIndex];
+                const newAudioSrc = getSlideAudio(slide);
+                if (newAudioSrc) {
+                    audio.src = newAudioSrc;
+                    audio.currentTime = currentTime;
+                    if (wasPlaying) {
+                        audio.play().catch(e => console.log('Audio play failed:', e));
+                    }
+                }
+            }
+        }
+
         function playAudio() {
-            const audioSrc = slides[currentSlideIndex].audio;
+            const audioSrc = getSlideAudio(slides[currentSlideIndex]);
             if (audioSrc) {
                 audio.src = audioSrc;
                 audio.play().catch(e => console.log('Audio play failed:', e));
@@ -799,6 +928,13 @@ ${slideData}
             document.getElementById('btnHelp').addEventListener('click', toggleHelp);
             document.getElementById('notesClose').addEventListener('click', toggleNotes);
 
+            // Voice toggle buttons
+            if (hasMultiVoice) {
+                document.querySelectorAll('.voice-btn').forEach(btn => {
+                    btn.addEventListener('click', () => switchVoice(btn.dataset.voice));
+                });
+            }
+
             volumeSlider.addEventListener('input', () => {
                 audio.volume = parseFloat(volumeSlider.value);
                 volumeIcon.innerHTML = audio.volume === 0 ? '&#128263;' : '&#128266;';
@@ -831,6 +967,12 @@ ${slideData}
                     case 'End': goToSlide(slides.length - 1); break;
                     default:
                         if (e.key >= '1' && e.key <= '9') goToSlide(parseInt(e.key) - 1);
+                        // Voice shortcuts: Shift + first letter of voice name
+                        if (e.shiftKey && hasMultiVoice && voiceNames.length > 0) {
+                            const keyLower = e.key.toLowerCase();
+                            const matchingVoice = voiceNames.find(v => v.startsWith(keyLower));
+                            if (matchingVoice) switchVoice(matchingVoice);
+                        }
                 }
             });
         }
@@ -868,7 +1010,8 @@ export async function renderStandaloneHtml(
   sourceDir: string,
   options?: StandaloneHtmlOptions,
 ): Promise<{ outputPath: string; fileSizeMb: number }> {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const { voices, onProgress, ...restOptions } = options || {};
+  const opts = { ...DEFAULT_OPTIONS, ...restOptions };
 
   // Output directory is where audio files are located (from timeline generation)
   const outputDir = dirname(outputPath);
@@ -877,6 +1020,9 @@ export async function renderStandaloneHtml(
   console.log(`Source directory: ${sourceDir}`);
   console.log(`Audio directory: ${outputDir}`);
   console.log(`MP3 bitrate: ${opts.mp3Bitrate}`);
+  if (voices && voices.length > 0) {
+    console.log(`Multi-voice: ${voices.map(v => v.name).join(', ')}`);
+  }
 
   // Prepare slides with embedded assets
   // Images are relative to sourceDir, audio is relative to outputDir
@@ -886,11 +1032,12 @@ export async function renderStandaloneHtml(
     sourceDir,
     outputDir,
     opts,
-    options?.onProgress,
+    voices,
+    onProgress,
   );
 
   // Generate HTML
-  const html = generateStandaloneHtml(talkTrack.title, preparedSlides, opts);
+  const html = generateStandaloneHtml(talkTrack.title, preparedSlides, opts, voices);
   await mkdir(outputDir, { recursive: true });
 
   // Write file

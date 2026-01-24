@@ -233,6 +233,45 @@ function generateStyles(options: Required<HtmlOptions>): string {
             color: white;
         }
 
+        /* Voice Toggle */
+        .voice-toggle {
+            display: flex;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px;
+            border-radius: 4px;
+        }
+
+        .voice-btn {
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .voice-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .voice-toggle-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+
         /* Progress */
         .progress {
             display: flex;
@@ -1213,6 +1252,15 @@ function generateSlidesJs(slides: PreparedHtmlSlide[]): string {
     const audioPath = slide.audioPath ? `'${escapeJs(slide.audioPath)}'` : 'null';
     const notes = slide.speakerNotes ? `'${escapeJs(slide.speakerNotes)}'` : 'null';
 
+    // Generate voice audio object if multi-voice is present
+    let voiceAudioJs = 'null';
+    if (slide.voiceAudio && slide.voiceAudio.length > 0) {
+      const voiceEntries = slide.voiceAudio.map((va) => {
+        return `'${va.name.toLowerCase()}': { path: '${escapeJs(va.audioPath)}', duration: ${va.audioDuration} }`;
+      });
+      voiceAudioJs = `{ ${voiceEntries.join(', ')} }`;
+    }
+
     return `{
             slug: '${escapeJs(slide.slug)}',
             title: '${escapeJs(slide.title)}',
@@ -1221,6 +1269,7 @@ function generateSlidesJs(slides: PreparedHtmlSlide[]): string {
             sectionColor: '${escapeJs(slide.sectionColor)}',
             audio: ${audioPath},
             audioDuration: ${slide.audioDuration},
+            voiceAudio: ${voiceAudioJs},
             notes: ${notes},
             isAppendix: ${slide.isAppendix}
         }`;
@@ -1256,6 +1305,16 @@ function generateScript(
   options: Required<HtmlOptions>,
 ): string {
   const hasAudio = slides.some((s) => s.audioPath !== null);
+  const hasMultiVoice = slides.some((s) => s.voiceAudio && s.voiceAudio.length > 0);
+
+  // Get voice names from the first slide with voice audio
+  const voiceNames: string[] = [];
+  if (hasMultiVoice) {
+    const slideWithVoices = slides.find((s) => s.voiceAudio && s.voiceAudio.length > 0);
+    if (slideWithVoices?.voiceAudio) {
+      voiceNames.push(...slideWithVoices.voiceAudio.map((v) => v.name));
+    }
+  }
 
   return `
         // Presentation Data
@@ -1265,7 +1324,9 @@ function generateScript(
             title: '${escapeJs(metadata.title)}',
             targetMinutes: ${metadata.targetMinutes},
             totalAudioDuration: ${metadata.totalAudioDuration},
-            hasAudio: ${hasAudio}
+            hasAudio: ${hasAudio},
+            hasMultiVoice: ${hasMultiVoice},
+            voices: ${JSON.stringify(voiceNames)}
         };
 
         // Utility: Escape HTML to prevent XSS
@@ -1277,6 +1338,7 @@ function generateScript(
 
         // State
         let currentIndex = 0;
+        let currentVoice = metadata.voices.length > 0 ? metadata.voices[0].toLowerCase() : null;
         let showNotes = false;
         let showTimer = true;
         let showHelp = false;
@@ -1406,7 +1468,7 @@ function generateScript(
             nextBtn.disabled = currentIndex === slides.length - 1;
 
             // Update play button state
-            if (!slide.audio) {
+            if (!slideHasAudio(slide)) {
                 playBtn.classList.add('no-audio');
                 playBtn.textContent = 'No Audio';
             } else {
@@ -1450,7 +1512,7 @@ function generateScript(
                 audioPlayer.pause();
                 currentIndex++;
                 updateSlide();
-                if (presentationRunning && autoAdvance && slides[currentIndex].audio) {
+                if (presentationRunning && autoAdvance && slideHasAudio(slides[currentIndex])) {
                     playCurrentAudio();
                 }
             } else if (presentationRunning) {
@@ -1495,12 +1557,54 @@ function generateScript(
             helpOverlay.classList.toggle('visible', showHelp);
         }
 
+        // Get audio path for current slide and voice
+        function getSlideAudio(slide) {
+            if (metadata.hasMultiVoice && slide.voiceAudio && currentVoice) {
+                const voiceData = slide.voiceAudio[currentVoice];
+                return voiceData ? voiceData.path : null;
+            }
+            return slide.audio;
+        }
+
+        // Check if current slide has audio
+        function slideHasAudio(slide) {
+            return getSlideAudio(slide) !== null;
+        }
+
+        // Switch voice and resume playback at same position
+        function switchVoice(voiceName) {
+            const wasPlaying = !audioPlayer.paused;
+            const currentTime = audioPlayer.currentTime;
+            const oldVoice = currentVoice;
+
+            currentVoice = voiceName.toLowerCase();
+
+            // Update voice toggle buttons
+            document.querySelectorAll('.voice-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.voice === currentVoice);
+            });
+
+            // If audio was playing, switch to new voice track at same position
+            if (wasPlaying || currentTime > 0) {
+                const slide = slides[currentIndex];
+                const newAudioPath = getSlideAudio(slide);
+                if (newAudioPath) {
+                    audioPlayer.src = newAudioPath;
+                    audioPlayer.currentTime = currentTime;
+                    if (wasPlaying) {
+                        audioPlayer.play().catch(e => console.log('Audio play failed:', e));
+                    }
+                }
+            }
+        }
+
         // Play current slide audio
         function playCurrentAudio() {
             const slide = slides[currentIndex];
-            if (!slide.audio) return;
+            const audioPath = getSlideAudio(slide);
+            if (!audioPath) return;
 
-            audioPlayer.src = slide.audio;
+            audioPlayer.src = audioPath;
             audioPlayer.play().catch(e => console.log('Audio play failed:', e));
             audioIndicator.classList.add('active');
             playBtn.classList.add('playing');
@@ -1518,7 +1622,7 @@ function generateScript(
         // Toggle audio playback
         function toggleAudio() {
             const slide = slides[currentIndex];
-            if (!slide.audio) return;
+            if (!slideHasAudio(slide)) return;
 
             if (audioPlayer.paused) {
                 playCurrentAudio();
@@ -1540,7 +1644,7 @@ function generateScript(
 
             updateTimer();
 
-            if (autoAdvance && slides[currentIndex].audio) {
+            if (autoAdvance && slideHasAudio(slides[currentIndex])) {
                 playCurrentAudio();
             }
         }
@@ -2324,6 +2428,14 @@ function generateScript(
                             goToSlide(sections[sectionIndex].startIndex);
                         }
                     }
+                    // Voice shortcuts: Shift + first letter of voice name
+                    if (e.shiftKey && metadata.hasMultiVoice && metadata.voices.length > 0) {
+                        const keyLower = e.key.toLowerCase();
+                        const matchingVoice = metadata.voices.find(v => v.toLowerCase().startsWith(keyLower));
+                        if (matchingVoice) {
+                            switchVoice(matchingVoice);
+                        }
+                    }
             }
         });
 
@@ -2339,7 +2451,28 @@ function generateScript(
 /**
  * Generates the help overlay HTML.
  */
-function generateHelpOverlay(): string {
+function generateHelpOverlay(slides: PreparedHtmlSlide[]): string {
+  // Check for multi-voice and generate voice shortcuts section
+  const hasMultiVoice = slides.some((s) => s.voiceAudio && s.voiceAudio.length > 0);
+  let voiceShortcuts = '';
+  if (hasMultiVoice) {
+    const slideWithVoices = slides.find((s) => s.voiceAudio && s.voiceAudio.length > 0);
+    if (slideWithVoices?.voiceAudio) {
+      const shortcuts = slideWithVoices.voiceAudio.map((v) => {
+        const key = v.name.charAt(0).toUpperCase();
+        return `                    <kbd>Shift+${key}</kbd> <span>Switch to ${v.name}</span>`;
+      }).join('\n');
+      voiceShortcuts = `
+            <div class="help-section">
+                <h3>Voice</h3>
+                <div class="help-grid">
+${shortcuts}
+                </div>
+            </div>
+`;
+    }
+  }
+
   return `
     <div class="help-overlay" id="helpOverlay">
         <div class="help-content">
@@ -2366,11 +2499,11 @@ function generateHelpOverlay(): string {
                     <kbd>N</kbd> <span>Toggle speaker notes</span>
                     <kbd>T</kbd> <span>Toggle timer</span>
                     <kbd>R</kbd> <span>Reset timer</span>
-                    <kbd>F</kbd> <span>Toggle fullscreen</span>
+                    <kbd>F</kbd> <span>Toggle fullscreen</kbd>
                     <kbd>P</kbd> <span>Print to PDF</span>
                 </div>
             </div>
-
+${voiceShortcuts}
             <div class="help-section">
                 <h3>Views</h3>
                 <div class="help-grid">
@@ -2389,7 +2522,7 @@ function generateHelpOverlay(): string {
                     <kbd>b</kbd> <span>Blank screen (black)</span>
                     <kbd>W</kbd> <span>Blank screen (white)</span>
                     <kbd>L</kbd> <span>Laser pointer</span>
-                    <kbd>A</kbd> <span>Annotation mode (draw)</span>
+                    <kbd>A</kbd> <span>Annotation mode (draw)</kbd>
                     <kbd>C</kbd> <span>Toggle pacing guide</span>
                     <kbd>Shift+B</kbd> <span>Rehearsal stats</span>
                 </div>
@@ -2526,6 +2659,35 @@ function generateJumpDialog(): string {
  * @param options - Rendering options
  * @returns Complete HTML document as string
  */
+/**
+ * Generates voice toggle HTML if multi-voice is enabled.
+ */
+function generateVoiceToggle(slides: PreparedHtmlSlide[]): string {
+  const hasMultiVoice = slides.some((s) => s.voiceAudio && s.voiceAudio.length > 0);
+  if (!hasMultiVoice) return '';
+
+  // Get voice names from the first slide with voice audio
+  const slideWithVoices = slides.find((s) => s.voiceAudio && s.voiceAudio.length > 0);
+  if (!slideWithVoices?.voiceAudio) return '';
+
+  const voiceButtons = slideWithVoices.voiceAudio.map((v, i) => {
+    const isFirst = i === 0;
+    const shortcut = v.name.charAt(0).toUpperCase();
+    return `<button class="voice-btn${isFirst ? ' active' : ''}" data-voice="${v.name.toLowerCase()}" onclick="switchVoice('${v.name}')" title="${v.name} (Shift+${shortcut})">${v.name}</button>`;
+  }).join('\n                    ');
+
+  return `
+            <div class="divider"></div>
+
+            <!-- Voice Toggle -->
+            <div class="control-group">
+                <span class="voice-toggle-label">Voice:</span>
+                <div class="voice-toggle">
+                    ${voiceButtons}
+                </div>
+            </div>`;
+}
+
 export function generateHtmlPresentation(
   metadata: PreparedHtmlMetadata,
   slides: PreparedHtmlSlide[],
@@ -2601,6 +2763,7 @@ export function generateHtmlPresentation(
                     <span></span><span></span><span></span><span></span><span></span>
                 </div>
             </div>
+            ${generateVoiceToggle(slides)}
 
             <div class="divider"></div>
 
@@ -2617,7 +2780,7 @@ export function generateHtmlPresentation(
         </div>
     </div>
 
-    ${generateHelpOverlay()}
+    ${generateHelpOverlay(slides)}
 
     ${generateGridOverlay(slides)}
 

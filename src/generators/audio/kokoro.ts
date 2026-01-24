@@ -19,6 +19,8 @@ import type {
   AudioResult,
   TextSegment,
   KokoroVoice,
+  VoiceConfig,
+  MultiVoiceAudioManifest,
 } from './types.js';
 
 /**
@@ -410,6 +412,65 @@ export async function generateKokoroAudio(
     totalDurationSecs,
     totalCharacters,
     slides: results,
+  };
+}
+
+/**
+ * Options for multi-voice audio generation.
+ */
+export interface MultiVoiceKokoroOptions extends Omit<KokoroOptions, 'voice' | 'onProgress'> {
+  /** Array of voice configurations to generate */
+  voices: VoiceConfig[];
+  /** Progress callback with voice and slide info */
+  onProgress?: (voiceName: string, slideSlug: string, progress: number) => void;
+}
+
+/**
+ * Generate audio for all slides using multiple voices.
+ * Creates voice-specific subdirectories: outputDir/george/, outputDir/emma/, etc.
+ *
+ * @param slides - Array of slide content to synthesize
+ * @param options - Multi-voice configuration options
+ * @returns Multi-voice audio manifest with paths for each voice
+ */
+export async function generateMultiVoiceKokoroAudio(
+  slides: SlideContent[],
+  options: MultiVoiceKokoroOptions
+): Promise<MultiVoiceAudioManifest> {
+  const { outputDir, voices, speed = 1.0, onProgress } = options;
+
+  const voiceManifests: Record<string, AudioManifest> = {};
+  let totalCharacters = 0;
+
+  for (const voiceConfig of voices) {
+    const voiceName = voiceConfig.name.toLowerCase();
+    const voiceOutputDir = join(outputDir, voiceName);
+
+    // Ensure voice-specific output directory exists
+    await mkdir(voiceOutputDir, { recursive: true });
+
+    // Generate audio for this voice
+    const manifest = await generateKokoroAudio(slides, {
+      outputDir: voiceOutputDir,
+      voice: voiceConfig.voiceId,
+      speed,
+      onProgress: onProgress
+        ? (slug, progress) => onProgress(voiceConfig.name, slug, progress)
+        : undefined,
+    });
+
+    voiceManifests[voiceName] = manifest;
+
+    // Track total characters (same for all voices)
+    if (totalCharacters === 0) {
+      totalCharacters = manifest.totalCharacters;
+    }
+  }
+
+  return {
+    voices,
+    voiceManifests,
+    totalCharacters,
   };
 }
 
