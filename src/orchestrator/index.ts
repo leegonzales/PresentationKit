@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, resolve, dirname } from 'node:path';
 import { nanoid } from 'nanoid';
 
@@ -18,11 +18,83 @@ import type {
 import { BuildStateMachine } from './state-machine.js';
 import { CostTracker, aggregateCosts, formatCostSummary } from './cost-tracker.js';
 
+// Parser imports
+import { parseTalkTrack } from '../parsers/talk-track.js';
+import type { TalkTrackV5 } from '../parsers/types.js';
+
+// Audio generator imports
+import { generateKokoroAudio } from '../generators/audio/kokoro.js';
+import type { AudioManifest as KokoroAudioManifest } from '../generators/audio/types.js';
+
+// Timeline builder imports
+import { buildTimeline } from '../generators/timeline/index.js';
+import type { Timeline, AudioManifest as TimelineAudioManifest, AudioManifestEntry } from '../generators/timeline/types.js';
+
+// Renderer imports
+import { renderHtmlPresentation } from '../renderers/html/index.js';
+import { renderSpeakerNotes } from '../renderers/notes/index.js';
+import { renderVideo } from '../renderers/remotion/renderer.js';
+
 // Re-export types and utilities
 export * from './types.js';
 export { BuildStateMachine } from './state-machine.js';
 export { CostTracker, aggregateCosts, formatCostSummary } from './cost-tracker.js';
 export type { CostSummary } from './cost-tracker.js';
+
+// -----------------------------------------------------------------------------
+// Serialization Helpers
+// -----------------------------------------------------------------------------
+
+/**
+ * Serializes a TalkTrackV5 object for JSON storage.
+ * Converts the slideContent Map to a plain object.
+ */
+function serializeTalkTrack(talkTrack: TalkTrackV5): object {
+  return {
+    ...talkTrack,
+    slideContent: Object.fromEntries(talkTrack.slideContent),
+  };
+}
+
+/**
+ * Deserializes a TalkTrackV5 object from JSON.
+ * Converts the slideContent object back to a Map.
+ */
+function deserializeTalkTrack(json: unknown): TalkTrackV5 {
+  const obj = json as Omit<TalkTrackV5, 'slideContent'> & {
+    slideContent: Record<string, TalkTrackV5['slideContent'] extends Map<string, infer V> ? V : never>;
+  };
+  return {
+    ...obj,
+    slideContent: new Map(Object.entries(obj.slideContent)),
+  } as TalkTrackV5;
+}
+
+/**
+ * Converts Kokoro AudioManifest format to Timeline AudioManifest format.
+ * The timeline builder expects a different structure than what Kokoro produces.
+ */
+function convertToTimelineAudioManifest(
+  kokoroManifest: KokoroAudioManifest,
+  voice: string,
+): TimelineAudioManifest {
+  const entries = new Map<string, AudioManifestEntry>();
+
+  for (const slide of kokoroManifest.slides) {
+    entries.set(slide.slideSlug, {
+      slug: slide.slideSlug,
+      path: slide.audioPath,
+      duration: slide.durationSecs,
+      provider: 'kokoro',
+    });
+  }
+
+  return {
+    voice,
+    provider: 'kokoro',
+    entries,
+  };
+}
 
 /**
  * Build a presentation from a talk track file.
@@ -164,7 +236,7 @@ async function runBuildPipeline(
  */
 async function executePipelineStages(
   stateMachine: BuildStateMachine,
-  _costTracker: CostTracker,
+  costTracker: CostTracker,
   outputDir: string
 ): Promise<void> {
   const manifest = stateMachine.getManifest();
@@ -185,7 +257,7 @@ async function executePipelineStages(
   // State: parsing -> generating_audio
   if (currentState === 'parsing') {
     await stateMachine.transitionTo('generating_audio');
-    await executeAudioGeneration(stateMachine, outputDir);
+    await executeAudioGeneration(stateMachine, costTracker, outputDir);
     currentState = 'generating_audio';
   }
 
@@ -201,7 +273,7 @@ async function executePipelineStages(
 
   // State: building_timeline -> rendering_*
   if (currentState === 'building_timeline' && nextState) {
-    await executeRenderingStages(stateMachine, outputDir);
+    await executeRenderingStages(stateMachine, costTracker, outputDir);
   }
 
   // Mark complete if not already
@@ -212,77 +284,108 @@ async function executePipelineStages(
 
 /**
  * Execute parsing stage.
- * TODO: Integrate with actual parser when available.
+ * Parses the talk track markdown and persists the result for resumption.
  */
 async function executeParsing(
   stateMachine: BuildStateMachine,
-  _outputDir: string
+  outputDir: string
 ): Promise<void> {
   const manifest = stateMachine.getManifest();
 
-  // TODO: Import and call the talk-track parser
-  // const { parseTalkTrack } = await import('../parsers/talk-track.js');
-  // const result = await parseTalkTrack(manifest.source.talkTrack);
+  // Read and parse the talk track
+  const sourceContent = await readFile(manifest.source.talkTrack, 'utf-8');
+  const talkTrack = parseTalkTrack(sourceContent);
 
-  // For now, just validate the source file exists
-  await readFile(manifest.source.talkTrack, 'utf-8');
+  // Persist parsed data for resumption
+  const talkTrackPath = join(outputDir, 'talktrack.json');
+  await writeFile(talkTrackPath, JSON.stringify(serializeTalkTrack(talkTrack), null, 2));
 
-  // Update manifest with parsed images
-  // TODO: Extract image paths from parsed talk track
-  // await stateMachine.updateAssets({ images: parsedImages });
+  // Extract and update image paths from slide definitions
+  const imagePaths = talkTrack.slides
+    .map((s) => s.image)
+    .filter((img): img is string => !!img);
+  await stateMachine.updateAssets({ images: imagePaths });
 }
 
 /**
  * Execute audio generation stage.
- * TODO: Integrate with actual audio generator when available.
+ * Generates audio using the configured TTS provider and persists the manifest.
  */
 async function executeAudioGeneration(
   stateMachine: BuildStateMachine,
+  costTracker: CostTracker,
   outputDir: string
 ): Promise<void> {
   const manifest = stateMachine.getManifest();
   const audioDir = join(outputDir, 'audio');
   await mkdir(audioDir, { recursive: true });
 
-  // TODO: Import and call the audio generator
-  // const { generateAudio } = await import('../generators/audio/index.js');
-  // const audioManifest = await generateAudio(parsedContent, {
-  //   provider: manifest.audioProvider,
-  //   voice: manifest.voice,
-  //   outputDir: audioDir,
-  // });
+  // Load parsed talk track
+  const talkTrackPath = join(outputDir, 'talktrack.json');
+  const talkTrackJson = JSON.parse(await readFile(talkTrackPath, 'utf-8'));
+  const talkTrack = deserializeTalkTrack(talkTrackJson);
 
-  // Track costs based on provider
-  // if (manifest.audioProvider === 'elevenlabs') {
-  //   await costTracker.trackElevenLabsUsage(audioManifest.totalCharacters);
-  // } else {
-  //   await costTracker.trackKokoroUsage(audioManifest.totalCharacters);
-  // }
+  // Get slides array from the slideContent Map
+  const slides = Array.from(talkTrack.slideContent.values());
+
+  // Generate audio based on provider
+  let kokoroManifest: KokoroAudioManifest;
+
+  if (manifest.audioProvider === 'kokoro') {
+    kokoroManifest = await generateKokoroAudio(slides, {
+      outputDir: audioDir,
+      voice: manifest.voice,
+    });
+    costTracker.trackKokoroUsage(kokoroManifest.totalCharacters, 'TTS generation');
+  } else {
+    // ElevenLabs path (future implementation)
+    throw new Error('ElevenLabs audio provider not yet implemented');
+  }
+
+  // Persist audio manifest (Kokoro format for storage)
+  const audioManifestPath = join(outputDir, 'audio-manifest.json');
+  await writeFile(audioManifestPath, JSON.stringify(kokoroManifest, null, 2));
 
   // Update manifest with audio paths
-  // await stateMachine.updateAssets({ audio: audioPaths });
-
-  // Placeholder: manifest the audio directory
-  void manifest.audioProvider;
-  void manifest.voice;
+  const audioPaths = kokoroManifest.slides
+    .map((s) => s.audioPath)
+    .filter((p): p is string => !!p && p.length > 0);
+  await stateMachine.updateAssets({ audio: audioPaths });
 }
 
 /**
  * Execute timeline building stage.
- * TODO: Integrate with actual timeline builder when available.
+ * Builds a synchronized timeline from talk track and audio manifest.
  */
 async function executeTimelineBuilding(
   stateMachine: BuildStateMachine,
   outputDir: string
 ): Promise<void> {
-  // TODO: Import and call the timeline builder
-  // const { buildTimeline } = await import('../generators/timeline/index.js');
-  // const timeline = await buildTimeline(parsedContent, audioManifest);
+  const manifest = stateMachine.getManifest();
 
+  // Load parsed data
+  const talkTrackPath = join(outputDir, 'talktrack.json');
+  const audioManifestPath = join(outputDir, 'audio-manifest.json');
+
+  const talkTrackJson = JSON.parse(await readFile(talkTrackPath, 'utf-8'));
+  const talkTrack = deserializeTalkTrack(talkTrackJson);
+
+  const kokoroManifest: KokoroAudioManifest = JSON.parse(
+    await readFile(audioManifestPath, 'utf-8')
+  );
+
+  // Convert Kokoro manifest to Timeline manifest format
+  const timelineAudioManifest = convertToTimelineAudioManifest(
+    kokoroManifest,
+    manifest.voice
+  );
+
+  // Build timeline
+  const timeline = buildTimeline(talkTrack, timelineAudioManifest);
+
+  // Persist timeline
   const timelinePath = join(outputDir, 'timeline.json');
-
-  // TODO: Write timeline to disk
-  // await writeFile(timelinePath, JSON.stringify(timeline, null, 2));
+  await writeFile(timelinePath, JSON.stringify(timeline, null, 2));
 
   await stateMachine.updateOutputs({ timeline: timelinePath });
 }
@@ -292,6 +395,7 @@ async function executeTimelineBuilding(
  */
 async function executeRenderingStages(
   stateMachine: BuildStateMachine,
+  costTracker: CostTracker,
   outputDir: string
 ): Promise<void> {
   const manifest = stateMachine.getManifest();
@@ -308,7 +412,7 @@ async function executeRenderingStages(
   if (manifest.requestedOutputs.includes('video')) {
     if (stateMachine.canTransitionTo('rendering_video')) {
       await stateMachine.transitionTo('rendering_video');
-      await executeVideoRendering(stateMachine, outputDir);
+      await executeVideoRendering(stateMachine, costTracker, outputDir);
     }
   }
 
@@ -323,59 +427,78 @@ async function executeRenderingStages(
 
 /**
  * Execute HTML rendering stage.
- * TODO: Integrate with actual HTML renderer when available.
+ * Generates an interactive HTML presentation.
  */
 async function executeHtmlRendering(
   stateMachine: BuildStateMachine,
   outputDir: string
 ): Promise<void> {
-  // TODO: Import and call the HTML renderer
-  // const { renderHtml } = await import('../renderers/html/index.js');
-  // await renderHtml(timeline, { outputDir });
+  // Load data
+  const talkTrackPath = join(outputDir, 'talktrack.json');
+  const timelinePath = join(outputDir, 'timeline.json');
 
+  const talkTrackJson = JSON.parse(await readFile(talkTrackPath, 'utf-8'));
+  const talkTrack = deserializeTalkTrack(talkTrackJson);
+
+  const timeline: Timeline = JSON.parse(await readFile(timelinePath, 'utf-8'));
+
+  // Render HTML
   const htmlPath = join(outputDir, 'presentation.html');
+  await renderHtmlPresentation(talkTrack, timeline, htmlPath, {
+    primaryColor: talkTrack.branding?.primary,
+  });
+
   await stateMachine.updateOutputs({ html: htmlPath });
 }
 
 /**
  * Execute video rendering stage.
- * TODO: Integrate with actual video renderer when available.
+ * Renders the presentation timeline to a video file using Remotion.
  */
 async function executeVideoRendering(
   stateMachine: BuildStateMachine,
+  costTracker: CostTracker,
   outputDir: string
 ): Promise<void> {
   const manifest = stateMachine.getManifest();
 
-  // TODO: Import and call the Remotion renderer
-  // const { renderVideo } = await import('../renderers/remotion/index.js');
-  // const renderResult = await renderVideo(timeline, {
-  //   quality: manifest.videoQuality || '1080p',
-  //   outputDir,
-  // });
+  // Load timeline
+  const timelinePath = join(outputDir, 'timeline.json');
+  const timeline: Timeline = JSON.parse(await readFile(timelinePath, 'utf-8'));
 
-  // Track Remotion render costs
-  // await costTracker.trackRemotionRender(renderResult.renderTimeSeconds);
-
+  // Render video
   const videoPath = join(outputDir, 'presentation.mp4');
-  await stateMachine.updateOutputs({ video: videoPath });
+  const startTime = Date.now();
 
-  // Placeholder
-  void manifest.videoQuality;
+  await renderVideo(timeline, outputDir, {
+    outputPath: videoPath,
+    quality: manifest.videoQuality || '1080p',
+    codec: 'h264',
+    crf: 23,
+  });
+
+  const renderSeconds = (Date.now() - startTime) / 1000;
+  costTracker.trackRemotionRender(renderSeconds, 'Video rendering');
+
+  await stateMachine.updateOutputs({ video: videoPath });
 }
 
 /**
  * Execute notes rendering stage.
- * TODO: Integrate with actual notes renderer when available.
+ * Generates printable speaker notes HTML.
  */
 async function executeNotesRendering(
   stateMachine: BuildStateMachine,
   outputDir: string
 ): Promise<void> {
-  // TODO: Import and call the notes renderer
-  // const { renderNotes } = await import('../renderers/notes/index.js');
-  // await renderNotes(parsedContent, { outputDir });
+  // Load talk track
+  const talkTrackPath = join(outputDir, 'talktrack.json');
+  const talkTrackJson = JSON.parse(await readFile(talkTrackPath, 'utf-8'));
+  const talkTrack = deserializeTalkTrack(talkTrackJson);
 
-  const notesPath = join(outputDir, 'speaker-notes.md');
+  // Render notes
+  const notesPath = join(outputDir, 'speaker-notes.html');
+  await renderSpeakerNotes(talkTrack, notesPath);
+
   await stateMachine.updateOutputs({ notes: notesPath });
 }
