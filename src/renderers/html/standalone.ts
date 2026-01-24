@@ -25,6 +25,7 @@ import { rm } from 'node:fs/promises';
 import type { TalkTrackV5, Section } from '../../parsers/types.js';
 import type { Timeline, TimelineSlide } from '../../generators/timeline/types.js';
 import { stripSemanticTags, getSectionColor, getSectionName, escapeHtml, escapeJs } from './utils.js';
+import { resolveImagePath } from '../../utils/asset-copier.js';
 
 /**
  * Options for standalone HTML rendering.
@@ -193,9 +194,7 @@ async function prepareSlides(
     let imageDataUri = '';
     const imagePath = content?.imagePath || slideDef.image;
     if (imagePath) {
-      const fullImagePath = isAbsolute(imagePath)
-        ? imagePath
-        : join(sourceDir, imagePath);
+      const fullImagePath = resolveImagePath(imagePath, sourceDir);
       const { mime, data } = await imageToBase64(fullImagePath);
       if (data) {
         imageDataUri = `data:${mime};base64,${data}`;
