@@ -46,6 +46,12 @@ import type {
 } from './types.js';
 import { DEFAULT_HTML_OPTIONS } from './types.js';
 import { generateHtmlPresentation } from './template.js';
+import {
+  stripSemanticTags,
+  getSectionColor,
+  getSectionName,
+  formatDate,
+} from './utils.js';
 
 // Re-export types for convenience
 export type {
@@ -62,80 +68,6 @@ export {
   type StandaloneHtmlOptions,
 } from './standalone.js';
 
-/**
- * Strips semantic tags from audio text for clean display.
- * Removes tags like [HOOK], [KEY_POINT], [PAUSE:500], etc.
- */
-function stripSemanticTags(audioText: string): string {
-  return audioText
-    .replace(
-      /\[(HOOK|KEY_POINT|EVIDENCE|STORY|TRANSITION|CALLBACK|LANDING|CTA|PAUSE)(?::\d+)?\]/gi,
-      '',
-    )
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Formats a date string or Date object for display.
- *
- * @param date - ISO date string (YYYY-MM-DD) or undefined
- * @returns Formatted date string (e.g., "January 19, 2026")
- */
-function formatDate(date?: string): string {
-  if (!date) {
-    return new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-
-  try {
-    const parsed = new Date(date + 'T00:00:00');
-    return parsed.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  } catch {
-    return date;
-  }
-}
-
-/**
- * Gets section color from the TalkTrack sections array.
- *
- * @param sectionId - The section ID to look up
- * @param sections - Array of Section definitions
- * @param defaultColor - Fallback color if section not found
- * @returns Hex color string
- */
-function getSectionColor(
-  sectionId: string,
-  sections: Section[],
-  defaultColor: string,
-): string {
-  const section = sections.find(
-    (s) => s.id.toLowerCase() === sectionId.toLowerCase(),
-  );
-  return section?.color ?? defaultColor;
-}
-
-/**
- * Gets section name from the TalkTrack sections array.
- *
- * @param sectionId - The section ID to look up
- * @param sections - Array of Section definitions
- * @returns Section name or ID as fallback
- */
-function getSectionName(sectionId: string, sections: Section[]): string {
-  const section = sections.find(
-    (s) => s.id.toLowerCase() === sectionId.toLowerCase(),
-  );
-  return section?.name ?? sectionId;
-}
 
 /**
  * Prepares slide data for rendering.

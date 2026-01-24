@@ -24,6 +24,7 @@ import { rm } from 'node:fs/promises';
 
 import type { TalkTrackV5, Section } from '../../parsers/types.js';
 import type { Timeline, TimelineSlide } from '../../generators/timeline/types.js';
+import { stripSemanticTags, getSectionColor, getSectionName } from './utils.js';
 
 /**
  * Options for standalone HTML rendering.
@@ -158,38 +159,6 @@ function escapeJs(text: string): string {
     .replace(/</g, '\\u003C');
 }
 
-/**
- * Strips semantic tags from audio text for clean display.
- */
-function stripSemanticTags(audioText: string): string {
-  return audioText
-    .replace(
-      /\[(HOOK|KEY_POINT|EVIDENCE|STORY|TRANSITION|CALLBACK|LANDING|CTA|PAUSE)(?::\d+)?\]/gi,
-      '',
-    )
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
-
-/**
- * Gets section color from the TalkTrack sections array.
- */
-function getSectionColor(sectionId: string, sections: Section[], defaultColor: string): string {
-  const section = sections.find(
-    (s) => s.id.toLowerCase() === sectionId.toLowerCase(),
-  );
-  return section?.color ?? defaultColor;
-}
-
-/**
- * Gets section name from the TalkTrack sections array.
- */
-function getSectionName(sectionId: string, sections: Section[]): string {
-  const section = sections.find(
-    (s) => s.id.toLowerCase() === sectionId.toLowerCase(),
-  );
-  return section?.name ?? sectionId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
 
 /**
  * Prepared slide data with embedded assets.
