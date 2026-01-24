@@ -6,7 +6,8 @@
  */
 
 import { copyFile, mkdir, access, readdir, stat } from 'node:fs/promises';
-import { join, dirname, basename, resolve, isAbsolute } from 'node:path';
+import { join, dirname, basename, resolve, isAbsolute, extname } from 'node:path';
+import { createHash } from 'node:crypto';
 
 /**
  * Result of copying assets.
@@ -115,10 +116,14 @@ export async function copyAssets(
         continue;
       }
 
-      // Destination uses just the filename in images/ folder
-      const filename = basename(sourcePath);
-      const destPath = join(imagesOutputDir, filename);
-      const relativePath = `images/${filename}`;
+      // Generate unique filename using hash of original path to prevent collisions
+      // e.g., section-1/diagram.png and section-2/diagram.png get unique names
+      const ext = extname(sourcePath);
+      const originalFilename = basename(sourcePath, ext);
+      const pathHash = createHash('md5').update(imagePath).digest('hex').slice(0, 8);
+      const uniqueFilename = `${originalFilename}-${pathHash}${ext}`;
+      const destPath = join(imagesOutputDir, uniqueFilename);
+      const relativePath = `images/${uniqueFilename}`;
 
       // Check if destination exists
       const destExists = await fileExists(destPath);

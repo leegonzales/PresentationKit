@@ -98,13 +98,9 @@ function normalizeAudioPath(audioPath: string, outputDir: string): string {
     return relativePath;
   }
 
-  // Fallback: extract audio/filename.wav from the path
-  const audioMatch = audioPath.match(/audio\/[^/]+$/);
-  if (audioMatch) {
-    return audioMatch[0];
-  }
-
-  // Last resort: return the original path
+  // If path cannot be made relative, log a warning and return as-is
+  // This helps identify unexpected path structures during debugging
+  console.warn(`Warning: Audio path "${audioPath}" is not relative to output directory "${outputDir}"`);
   return audioPath;
 }
 

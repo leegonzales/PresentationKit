@@ -116,7 +116,7 @@ async function wavToMp3Base64(wavPath: string, bitrate: string = '64k'): Promise
       '-b:a', bitrate,
       '-ac', '1', // Mono for speech
       tmpPath,
-    ], { stdio: 'pipe' });
+    ], { stdio: 'ignore' });
 
     const buffer = await readFile(tmpPath);
     return buffer.toString('base64');
@@ -633,7 +633,7 @@ function generateStandaloneHtml(
             </div>
 
             <div class="control-group">
-                <button class="btn" id="btnAutoAdvance" title="Auto-advance (A)">&#8634;</button>
+                <button class="btn" id="btnAutoAdvance" title="Auto-advance (Y)">&#8634;</button>
                 <button class="btn" id="btnNotes" title="Speaker notes (N)">&#128221;</button>
                 <button class="btn" id="btnFullscreen" title="Fullscreen (F)">&#9974;</button>
                 <button class="btn" id="btnHelp" title="Help (?)">?</button>
@@ -653,7 +653,7 @@ function generateStandaloneHtml(
         <h2>Keyboard Shortcuts</h2>
         <div class="shortcut-row"><span class="shortcut-key">&#8592; / &#8594;</span><span>Navigate slides</span></div>
         <div class="shortcut-row"><span class="shortcut-key">Space</span><span>Play/Pause</span></div>
-        <div class="shortcut-row"><span class="shortcut-key">A</span><span>Auto-advance</span></div>
+        <div class="shortcut-row"><span class="shortcut-key">Y</span><span>Auto-advance</span></div>
         <div class="shortcut-row"><span class="shortcut-key">N</span><span>Toggle notes</span></div>
         <div class="shortcut-row"><span class="shortcut-key">F</span><span>Fullscreen</span></div>
         <div class="shortcut-row"><span class="shortcut-key">M</span><span>Mute</span></div>
@@ -850,7 +850,7 @@ ${slideData}
                     case 'ArrowRight': case 'PageDown': nextSlide(); break;
                     case 'ArrowLeft': case 'PageUp': prevSlide(); break;
                     case ' ': e.preventDefault(); togglePlay(); break;
-                    case 'a': case 'A': toggleAutoAdvance(); break;
+                    case 'y': case 'Y': toggleAutoAdvance(); break;
                     case 'n': case 'N': toggleNotes(); break;
                     case 'f': case 'F': toggleFullscreen(); break;
                     case 'm': case 'M':
