@@ -11,6 +11,28 @@ Unified presentation infrastructure for transforming Talk Track v5 documents int
 - **Generate printable speaker notes** - Clean PDF-ready notes with slide thumbnails and timing
 - **Cost tracking and resumable builds** - Monitor API costs and resume interrupted renders
 
+## Prerequisites
+
+- **Node.js 18+** - Required for running the CLI
+- **FFmpeg** - Required for standalone HTML generation with embedded audio (WAV to MP3 conversion)
+
+### Installing FFmpeg
+
+**macOS (Homebrew):**
+```bash
+brew install ffmpeg
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update && sudo apt install ffmpeg
+```
+
+**Windows (Chocolatey):**
+```bash
+choco install ffmpeg
+```
+
 ## Installation
 
 ```bash
@@ -134,9 +156,26 @@ export ELEVENLABS_API_KEY=your_api_key
 | `pk audio <file>` | Generate audio only |
 | `pk video <file>` | Render video (requires audio) |
 | `pk html <file>` | Build HTML presentation |
+| `pk html <file> --standalone` | Build standalone HTML with embedded assets |
 | `pk notes <file>` | Generate speaker notes |
 | `pk validate <file>` | Check Talk Track v5 syntax |
 | `pk costs` | Show API cost summary |
+
+### Standalone HTML
+
+Generate a single, self-contained HTML file with all assets embedded as base64:
+
+```bash
+pk html presentation.md --standalone
+```
+
+This creates a portable presentation file that works offline with:
+- Images embedded as base64 data URIs
+- Audio converted to MP3 and embedded (requires FFmpeg)
+- All CSS and JavaScript inlined
+
+Options:
+- `--mp3-bitrate <rate>` - MP3 bitrate for audio (default: 64k)
 
 ## Output Structure
 

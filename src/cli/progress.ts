@@ -280,6 +280,28 @@ export function printError(message: string, details?: string): void {
 }
 
 /**
+ * Print structured error with optional list of sub-errors.
+ * Used for TalkTrackParseError and TimelineBuildError.
+ */
+export function printStructuredError(
+  title: string,
+  error: { message: string; errors?: string[] },
+  helpText?: string
+): void {
+  printError(title);
+  if (error.errors && error.errors.length > 0) {
+    console.error();
+    error.errors.forEach((e) => console.error(`  - ${e}`));
+  } else {
+    console.error(`  - ${error.message}`);
+  }
+  if (helpText) {
+    console.error();
+    console.error(helpText);
+  }
+}
+
+/**
  * Print success message with formatting.
  */
 export function printSuccess(message: string): void {

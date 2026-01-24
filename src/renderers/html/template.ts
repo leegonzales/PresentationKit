@@ -17,30 +17,7 @@
 
 import type { HtmlOptions, PreparedHtmlSlide, PreparedHtmlMetadata, SectionInfo } from './types.js';
 import { DEFAULT_HTML_OPTIONS } from './types.js';
-
-/**
- * Escapes HTML special characters for safe rendering.
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Escapes a string for safe use in JavaScript.
- */
-function escapeJs(text: string): string {
-  return text
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r');
-}
+import { escapeHtml, escapeJs } from './utils.js';
 
 /**
  * Generates CSS styles for the HTML presentation.
@@ -1607,6 +1584,11 @@ function generateScript(
             modeManual.classList.toggle('active', !autoAdvance);
         }
 
+        // Toggle auto-advance mode (keyboard shortcut)
+        function toggleAutoAdvance() {
+            setMode(autoAdvance ? 'manual' : 'auto');
+        }
+
         // Toggle grid overlay
         function toggleGrid() {
             showGrid = !showGrid;
@@ -2317,6 +2299,10 @@ function generateScript(
                 case 'C':
                     togglePacing();
                     break;
+                case 'y':
+                case 'Y':
+                    toggleAutoAdvance();
+                    break;
                 case 'B':
                     if (e.shiftKey) {
                         toggleRehearsalStats();
@@ -2376,6 +2362,7 @@ function generateHelpOverlay(): string {
                 <h3>Controls</h3>
                 <div class="help-grid">
                     <kbd>Enter</kbd> <span>Start/Stop presentation</span>
+                    <kbd>Y</kbd> <span>Toggle auto-advance mode</span>
                     <kbd>N</kbd> <span>Toggle speaker notes</span>
                     <kbd>T</kbd> <span>Toggle timer</span>
                     <kbd>R</kbd> <span>Reset timer</span>

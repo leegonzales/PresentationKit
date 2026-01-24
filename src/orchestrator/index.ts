@@ -7,8 +7,11 @@
 
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join, resolve, dirname } from 'node:path';
+import { join, resolve, dirname, isAbsolute, relative } from 'node:path';
 import { nanoid } from 'nanoid';
+
+// Asset copier for handling images
+import { copyAssets, resolveImagePath } from '../utils/asset-copier.js';
 
 import type {
   BuildManifest,
@@ -71,19 +74,53 @@ function deserializeTalkTrack(json: unknown): TalkTrackV5 {
 }
 
 /**
+ * Converts an absolute audio path to a relative path.
+ * e.g., /Users/.../output/audio/title.wav -> audio/title.wav
+ *
+ * Uses Node.js path functions for cross-platform compatibility.
+ */
+function normalizeAudioPath(audioPath: string, outputDir: string): string {
+  if (!audioPath) {
+    return audioPath;
+  }
+
+  // If already relative, return as-is
+  if (!isAbsolute(audioPath)) {
+    return audioPath;
+  }
+
+  // Use path.relative for cross-platform path resolution
+  const absoluteOutputDir = resolve(outputDir);
+  const relPath = relative(absoluteOutputDir, audioPath);
+
+  // Only accept paths that are inside the output directory (no .. prefix)
+  if (!relPath.startsWith('..') && !isAbsolute(relPath)) {
+    // Normalize to forward slashes for consistency across platforms
+    return relPath.replace(/\\/g, '/');
+  }
+
+  // If path cannot be made relative to the output directory, log a warning and return as-is
+  // This helps identify unexpected path structures during debugging
+  console.warn(`Warning: Audio path "${audioPath}" is not relative to output directory "${outputDir}"`);
+  return audioPath;
+}
+
+/**
  * Converts Kokoro AudioManifest format to Timeline AudioManifest format.
  * The timeline builder expects a different structure than what Kokoro produces.
+ * Also normalizes absolute audio paths to relative paths.
  */
 function convertToTimelineAudioManifest(
   kokoroManifest: KokoroAudioManifest,
   voice: string,
+  outputDir: string,
 ): TimelineAudioManifest {
   const entries = new Map<string, AudioManifestEntry>();
 
   for (const slide of kokoroManifest.slides) {
     entries.set(slide.slideSlug, {
       slug: slide.slideSlug,
-      path: slide.audioPath,
+      path: normalizeAudioPath(slide.audioPath, outputDir),
       duration: slide.durationSecs,
       provider: 'kokoro',
     });
@@ -137,6 +174,7 @@ export async function buildPresentation(
     createdAt: new Date().toISOString(),
     source: {
       talkTrack: absoluteTalkTrackPath,
+      sourceDir: dirname(absoluteTalkTrackPath),
       hash: sourceHash,
     },
     outputs: {},
@@ -284,27 +322,51 @@ async function executePipelineStages(
 
 /**
  * Execute parsing stage.
- * Parses the talk track markdown and persists the result for resumption.
+ * Parses the talk track markdown, copies assets, and persists the result for resumption.
  */
 async function executeParsing(
   stateMachine: BuildStateMachine,
   outputDir: string
 ): Promise<void> {
   const manifest = stateMachine.getManifest();
+  const sourceDir = manifest.source.sourceDir;
 
   // Read and parse the talk track
   const sourceContent = await readFile(manifest.source.talkTrack, 'utf-8');
   const talkTrack = parseTalkTrack(sourceContent);
 
-  // Persist parsed data for resumption
-  const talkTrackPath = join(outputDir, 'talktrack.json');
-  await writeFile(talkTrackPath, JSON.stringify(serializeTalkTrack(talkTrack), null, 2));
-
-  // Extract image paths from slide content (has full relative paths)
+  // Extract image paths from slide content
   const imagePaths = Array.from(talkTrack.slideContent.values())
     .map((sc) => sc.imagePath)
     .filter((p): p is string => !!p);
-  await stateMachine.updateAssets({ images: imagePaths });
+
+  // Copy images from source directory to output directory
+  console.log(`Copying ${imagePaths.length} images from ${sourceDir} to ${outputDir}/images/`);
+  const copyResult = await copyAssets(imagePaths, sourceDir, outputDir);
+
+  if (copyResult.warnings.length > 0) {
+    console.warn('Asset copy warnings:');
+    copyResult.warnings.forEach((w) => console.warn(`  - ${w}`));
+  }
+  console.log(`Copied ${copyResult.imagesCopied} images`);
+
+  // Update talkTrack slideContent with new image paths
+  for (const [slug, content] of talkTrack.slideContent) {
+    if (content.imagePath) {
+      const newPath = copyResult.pathMapping.get(content.imagePath);
+      if (newPath) {
+        content.imagePath = newPath;
+      }
+    }
+  }
+
+  // Persist parsed data for resumption (with updated image paths)
+  const talkTrackPath = join(outputDir, 'talktrack.json');
+  await writeFile(talkTrackPath, JSON.stringify(serializeTalkTrack(talkTrack), null, 2));
+
+  // Update manifest with copied image paths
+  const copiedImagePaths = Array.from(copyResult.pathMapping.values());
+  await stateMachine.updateAssets({ images: copiedImagePaths });
 }
 
 /**
@@ -375,9 +437,11 @@ async function executeTimelineBuilding(
   );
 
   // Convert Kokoro manifest to Timeline manifest format
+  // Normalizes absolute audio paths to relative paths
   const timelineAudioManifest = convertToTimelineAudioManifest(
     kokoroManifest,
-    manifest.voice
+    manifest.voice,
+    outputDir
   );
 
   // Build timeline

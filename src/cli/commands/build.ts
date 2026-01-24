@@ -12,11 +12,14 @@ import { mkdir } from 'node:fs/promises';
 import { buildPresentation } from '../../orchestrator/index.js';
 import type { OutputFormat, VideoQuality } from '../../orchestrator/types.js';
 import type { AudioProvider } from '../../generators/audio/types.js';
+import { TalkTrackParseError } from '../../parsers/talk-track.js';
+import { TimelineBuildError } from '../../generators/timeline/index.js';
 import {
   ProgressSpinner,
   printHeader,
   printSuccess,
   printError,
+  printStructuredError,
   printKeyValue,
   validateFile,
   parseOutputFormats,
@@ -160,8 +163,20 @@ async function buildAction(
     printSuccess(`Presentation built successfully in ${outputDir}`);
   } catch (error) {
     spinner.fail('Build failed');
-    const message = error instanceof Error ? error.message : String(error);
-    printError(message);
+
+    // Handle specific error types with detailed messages
+    if (error instanceof TalkTrackParseError) {
+      printStructuredError(
+        'Talk track validation failed:',
+        error,
+        'Please fix the above errors in your talk track file and try again.'
+      );
+    } else if (error instanceof TimelineBuildError) {
+      printStructuredError('Timeline building failed:', error);
+    } else {
+      const message = error instanceof Error ? error.message : String(error);
+      printError(message);
+    }
 
     if (options.verbose && error instanceof Error && error.stack) {
       console.error('\nStack trace:');

@@ -36,3 +36,4 @@ out/
 # Claude Code local settings (keep skills tracked)
 .claude/settings.local.json
 test-output/
+.beads/

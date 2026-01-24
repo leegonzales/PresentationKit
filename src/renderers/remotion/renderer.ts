@@ -208,9 +208,13 @@ export async function renderVideo(
     opts.onProgress?.(0);
 
     // Bundle the Remotion project
+    // Use the assets path as the public directory so Remotion can serve images/audio
     console.log('Bundling Remotion project...');
+    console.log(`Using public directory: ${resolve(assetsPath)}`);
     bundlePath = await bundle({
       entryPoint,
+      // Set the public directory to where our assets (images, audio) are located
+      publicDir: resolve(assetsPath),
       // Configure webpack to resolve .js imports to .ts/.tsx files
       webpackOverride: (config) => {
         return {
