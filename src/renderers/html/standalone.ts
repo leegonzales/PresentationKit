@@ -121,7 +121,8 @@ async function wavToMp3Base64(wavPath: string, bitrate: string = '64k'): Promise
     const buffer = await readFile(tmpPath);
     return buffer.toString('base64');
   } catch (error) {
-    console.warn(`Warning: Failed to convert ${wavPath} to MP3`);
+    const details = error instanceof Error ? error.message : String(error);
+    console.warn(`Warning: Failed to convert ${wavPath} to MP3. Details: ${details}`);
     return '';
   } finally {
     // Clean up temp file
@@ -201,11 +202,19 @@ interface PreparedStandaloneSlide {
 
 /**
  * Prepares slides with embedded base64 assets.
+ *
+ * @param talkTrack - Parsed talk track
+ * @param timeline - Timeline with audio paths (audio is relative to audioBaseDir)
+ * @param sourceDir - Directory for resolving image paths (talk track location)
+ * @param audioBaseDir - Directory for resolving audio paths (output directory)
+ * @param options - Rendering options
+ * @param onProgress - Progress callback
  */
 async function prepareSlides(
   talkTrack: TalkTrackV5,
   timeline: Timeline | null,
   sourceDir: string,
+  audioBaseDir: string,
   options: Required<Omit<StandaloneHtmlOptions, 'onProgress'>>,
   onProgress?: (message: string, progress: number) => void,
 ): Promise<PreparedStandaloneSlide[]> {
@@ -251,11 +260,12 @@ async function prepareSlides(
     }
 
     // Resolve and embed audio (convert WAV to MP3)
+    // Audio paths are relative to the output directory (audioBaseDir), not sourceDir
     let audioDataUri = '';
     if (timelineSlide?.audioPath) {
       const audioPath = timelineSlide.audioPath.startsWith('/')
         ? timelineSlide.audioPath
-        : join(sourceDir, timelineSlide.audioPath);
+        : join(audioBaseDir, timelineSlide.audioPath);
       const mp3Data = await wavToMp3Base64(audioPath, options.mp3Bitrate);
       if (mp3Data) {
         audioDataUri = `data:audio/mpeg;base64,${mp3Data}`;
@@ -904,24 +914,27 @@ export async function renderStandaloneHtml(
 ): Promise<{ outputPath: string; fileSizeMb: number }> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
+  // Output directory is where audio files are located (from timeline generation)
+  const outputDir = dirname(outputPath);
+
   console.log(`\nGenerating standalone HTML presentation...`);
   console.log(`Source directory: ${sourceDir}`);
+  console.log(`Audio directory: ${outputDir}`);
   console.log(`MP3 bitrate: ${opts.mp3Bitrate}`);
 
   // Prepare slides with embedded assets
+  // Images are relative to sourceDir, audio is relative to outputDir
   const preparedSlides = await prepareSlides(
     talkTrack,
     timeline,
     sourceDir,
+    outputDir,
     opts,
     options?.onProgress,
   );
 
   // Generate HTML
   const html = generateStandaloneHtml(talkTrack.title, preparedSlides, opts);
-
-  // Ensure output directory exists
-  const outputDir = dirname(outputPath);
   await mkdir(outputDir, { recursive: true });
 
   // Write file
