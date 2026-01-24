@@ -15,6 +15,7 @@ import {
   printHeader,
   printSuccess,
   printError,
+  printStructuredError,
   printKeyValue,
   printSection,
   validateFile,
@@ -98,22 +99,7 @@ async function htmlAction(
     spinner.start('Parsing talk track...');
     const sourceContent = await readFile(absolutePath, 'utf-8');
 
-    let talkTrack;
-    try {
-      talkTrack = parseTalkTrack(sourceContent);
-    } catch (error) {
-      if (error instanceof TalkTrackParseError) {
-        spinner.fail('Talk track parsing failed');
-        printError('Validation errors:');
-        if (error.errors && error.errors.length > 0) {
-          error.errors.forEach((e) => console.error(`  - ${e}`));
-        } else {
-          console.error(`  - ${error.message}`);
-        }
-        process.exit(1);
-      }
-      throw error;
-    }
+    const talkTrack = parseTalkTrack(sourceContent);
 
     const slideCount = talkTrack.slides.length;
     spinner.succeed(`Parsed ${slideCount} slides`);
@@ -198,8 +184,18 @@ async function htmlAction(
     printSuccess(`HTML presentation generated at ${outputPath}`);
   } catch (error) {
     spinner.fail('HTML generation failed');
-    const message = error instanceof Error ? error.message : String(error);
-    printError(message);
+
+    // Handle specific error types with detailed messages
+    if (error instanceof TalkTrackParseError) {
+      printStructuredError(
+        'Talk track validation failed:',
+        error,
+        'Please fix the above errors in your talk track file and try again.'
+      );
+    } else {
+      const message = error instanceof Error ? error.message : String(error);
+      printError(message);
+    }
 
     if (options.verbose && error instanceof Error && error.stack) {
       console.error('\nStack trace:');

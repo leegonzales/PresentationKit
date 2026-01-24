@@ -19,6 +19,7 @@ import {
   printHeader,
   printSuccess,
   printError,
+  printStructuredError,
   printKeyValue,
   validateFile,
   parseOutputFormats,
@@ -165,23 +166,13 @@ async function buildAction(
 
     // Handle specific error types with detailed messages
     if (error instanceof TalkTrackParseError) {
-      printError('Talk track validation failed:');
-      if (error.errors && error.errors.length > 0) {
-        console.error();
-        error.errors.forEach((e) => console.error(`  - ${e}`));
-      } else {
-        console.error(`  - ${error.message}`);
-      }
-      console.error();
-      console.error('Please fix the above errors in your talk track file and try again.');
+      printStructuredError(
+        'Talk track validation failed:',
+        error,
+        'Please fix the above errors in your talk track file and try again.'
+      );
     } else if (error instanceof TimelineBuildError) {
-      printError('Timeline building failed:');
-      if (error.errors && error.errors.length > 0) {
-        console.error();
-        error.errors.forEach((e) => console.error(`  - ${e}`));
-      } else {
-        console.error(`  - ${error.message}`);
-      }
+      printStructuredError('Timeline building failed:', error);
     } else {
       const message = error instanceof Error ? error.message : String(error);
       printError(message);
