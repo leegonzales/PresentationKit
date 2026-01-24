@@ -7,7 +7,7 @@
 
 import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join, resolve, dirname } from 'node:path';
+import { join, resolve, dirname, isAbsolute, relative } from 'node:path';
 import { nanoid } from 'nanoid';
 
 // Asset copier for handling images
@@ -76,6 +76,8 @@ function deserializeTalkTrack(json: unknown): TalkTrackV5 {
 /**
  * Converts an absolute audio path to a relative path.
  * e.g., /Users/.../output/audio/title.wav -> audio/title.wav
+ *
+ * Uses Node.js path functions for cross-platform compatibility.
  */
 function normalizeAudioPath(audioPath: string, outputDir: string): string {
   if (!audioPath) {
@@ -83,22 +85,21 @@ function normalizeAudioPath(audioPath: string, outputDir: string): string {
   }
 
   // If already relative, return as-is
-  if (!audioPath.startsWith('/')) {
+  if (!isAbsolute(audioPath)) {
     return audioPath;
   }
 
-  // Try to make it relative to the output directory
+  // Use path.relative for cross-platform path resolution
   const absoluteOutputDir = resolve(outputDir);
-  if (audioPath.startsWith(absoluteOutputDir)) {
-    // Remove the output directory prefix and any leading slash
-    let relativePath = audioPath.slice(absoluteOutputDir.length);
-    if (relativePath.startsWith('/')) {
-      relativePath = relativePath.slice(1);
-    }
-    return relativePath;
+  const relPath = relative(absoluteOutputDir, audioPath);
+
+  // Only accept paths that are inside the output directory (no .. prefix)
+  if (!relPath.startsWith('..') && !isAbsolute(relPath)) {
+    // Normalize to forward slashes for consistency across platforms
+    return relPath.replace(/\\/g, '/');
   }
 
-  // If path cannot be made relative, log a warning and return as-is
+  // If path cannot be made relative to the output directory, log a warning and return as-is
   // This helps identify unexpected path structures during debugging
   console.warn(`Warning: Audio path "${audioPath}" is not relative to output directory "${outputDir}"`);
   return audioPath;

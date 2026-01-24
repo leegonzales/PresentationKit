@@ -277,9 +277,7 @@ function generateStandaloneHtml(
   options: Required<Omit<StandaloneHtmlOptions, 'onProgress'>>,
 ): string {
   const slideDataEntries = slides.map((slide) => {
-    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', ` +
-      `section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', ` +
-      `image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', notes: '${slide.notes}' }`;
+    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', notes: '${slide.notes}' }`;
   });
   const slideData = slideDataEntries.join(',\n');
 

@@ -126,6 +126,20 @@ async function htmlAction(
 
     if (options.standalone) {
       // Standalone mode: embed all assets as base64
+      // Check for FFmpeg if we have audio to embed
+      if (timeline) {
+        try {
+          const { execa } = await import('execa');
+          await execa('ffmpeg', ['-version']);
+        } catch {
+          spinner.fail('Prerequisite check failed');
+          printError(
+            'FFmpeg not found',
+            'FFmpeg is required to embed audio in standalone HTML. Please install it and ensure it is in your PATH.'
+          );
+          process.exit(1);
+        }
+      }
       spinner.start('Generating standalone HTML (embedding assets)...');
 
       const result = await renderStandaloneHtml(
