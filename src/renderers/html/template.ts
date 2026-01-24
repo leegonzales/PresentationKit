@@ -2091,7 +2091,7 @@ function generateScript(
 
         // Listen for presenter view ready message
         window.addEventListener('message', function(e) {
-            if (e.data && e.data.type === 'presenterReady') {
+            if (e.source === presenterViewWindow && e.data && e.data.type === 'presenterReady') {
                 updatePresenterView();
             }
         });
@@ -2399,7 +2399,7 @@ function generateHelpOverlay(): string {
             <div class="help-section">
                 <h3>Presentation Tools</h3>
                 <div class="help-grid">
-                    <kbd>B</kbd> <span>Blank screen (black)</span>
+                    <kbd>b</kbd> <span>Blank screen (black)</span>
                     <kbd>W</kbd> <span>Blank screen (white)</span>
                     <kbd>L</kbd> <span>Laser pointer</span>
                     <kbd>A</kbd> <span>Annotation mode (draw)</span>
