@@ -1311,6 +1311,7 @@ function generateScript(
         let showRehearsalStats = false;
         let slideStartTime = 0;
         let slideTimes = [];
+        let timedSlideIndex = 0;
         let presenterViewWindow = null;
         let presentationRunning = false;
         let autoAdvance = true;
@@ -1976,9 +1977,10 @@ function generateScript(
             const now = Date.now();
             if (slideStartTime > 0) {
                 const duration = (now - slideStartTime) / 1000;
-                slideTimes[currentIndex] = (slideTimes[currentIndex] || 0) + duration;
+                slideTimes[timedSlideIndex] = (slideTimes[timedSlideIndex] || 0) + duration;
             }
             slideStartTime = now;
+            timedSlideIndex = currentIndex;
         }
 
         function updateRehearsalDisplay() {
@@ -2055,36 +2057,32 @@ function generateScript(
                         </div>
                     </div>
                     <script>
-                        window.opener.presenterViewUpdate = function(data) {
+                        // Define update function on this window
+                        window.updateView = function(data) {
                             document.getElementById('pvCurrent').src = data.currentImage;
                             document.getElementById('pvNext').src = data.nextImage || '';
                             document.getElementById('pvNotes').innerHTML = data.notes || '<p style="color:#666">No notes</p>';
                             document.getElementById('pvTimer').textContent = data.timer;
                             document.getElementById('pvTimer').style.color = data.timerColor;
                         };
-                        // Clean up on close
-                        window.addEventListener('beforeunload', () => {
-                            if (window.opener) {
-                                window.opener.presenterViewUpdate = null;
-                            }
-                        });
                     <\/script>
                 </body>
                 </html>
             \`);
             presenterViewWindow.document.close();
-            updatePresenterView();
+            // Small delay to ensure popup script has run
+            setTimeout(updatePresenterView, 100);
         }
 
         function updatePresenterView() {
-            if (presenterViewWindow && !presenterViewWindow.closed && window.presenterViewUpdate) {
+            if (presenterViewWindow && !presenterViewWindow.closed && typeof presenterViewWindow.updateView === 'function') {
                 const slide = slides[currentIndex];
                 const nextSlide = slides[currentIndex + 1];
                 // Escape notes then convert newlines to paragraphs
                 const safeNotes = slide.notes
                     ? '<p>' + escapeHtmlForPv(slide.notes).replace(/\\n/g, '</p><p>') + '</p>'
                     : null;
-                window.presenterViewUpdate({
+                presenterViewWindow.updateView({
                     currentImage: slide.image,
                     nextImage: nextSlide ? nextSlide.image : null,
                     notes: safeNotes,
@@ -2284,7 +2282,9 @@ function generateScript(
                     togglePacing();
                     break;
                 case 'B':
-                    toggleRehearsalStats();
+                    if (e.shiftKey) {
+                        toggleRehearsalStats();
+                    }
                     break;
                 case 'f':
                 case 'F':
