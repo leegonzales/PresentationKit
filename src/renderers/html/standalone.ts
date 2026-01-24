@@ -686,12 +686,24 @@ ${slideData}
                 const slideEl = document.createElement('div');
                 slideEl.className = 'slide';
                 slideEl.id = 'slide-' + index;
-                slideEl.innerHTML =
-                    '<div class="section-indicator" style="background: ' + slide.sectionColor + '">' + slide.section + '</div>' +
-                    '<div class="audio-indicator" id="audio-indicator-' + index + '">' +
-                    '<div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>' +
-                    '<span>Audio</span></div>' +
-                    '<img src="' + slide.image + '" alt="' + slide.title + '">';
+
+                // Use textContent for user-provided values to prevent XSS
+                const sectionIndicator = document.createElement('div');
+                sectionIndicator.className = 'section-indicator';
+                sectionIndicator.style.background = slide.sectionColor;
+                sectionIndicator.textContent = slide.section;
+
+                // Audio indicator uses static content only
+                const audioIndicator = document.createElement('div');
+                audioIndicator.className = 'audio-indicator';
+                audioIndicator.id = 'audio-indicator-' + index;
+                audioIndicator.innerHTML = '<div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div><span>Audio</span>';
+
+                const img = document.createElement('img');
+                img.src = slide.image;
+                img.alt = slide.title;
+
+                slideEl.append(sectionIndicator, audioIndicator, img);
                 slidesContainer.appendChild(slideEl);
             });
         }
