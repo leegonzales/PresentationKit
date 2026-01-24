@@ -2019,7 +2019,7 @@ function generateScript(
                 return;
             }
             const safeTitle = escapeHtmlForPv(metadata.title);
-            pvWindow.document.write(\`
+            presenterViewWindow.document.write(\`
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -2065,13 +2065,17 @@ function generateScript(
                             document.getElementById('pvTimer').textContent = data.timer;
                             document.getElementById('pvTimer').style.color = data.timerColor;
                         };
+                        // Callback to main window when ready
+                        if (typeof window.onPresenterReady === 'function') {
+                            window.onPresenterReady();
+                        }
                     <\/script>
                 </body>
                 </html>
             \`);
             presenterViewWindow.document.close();
-            // Small delay to ensure popup script has run
-            setTimeout(updatePresenterView, 100);
+            // Have child window call back when ready, which is more robust than a timeout
+            presenterViewWindow.onPresenterReady = updatePresenterView;
         }
 
         function updatePresenterView() {
