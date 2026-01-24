@@ -1561,6 +1561,8 @@ function generateScript(
 
         // Stop presentation
         function stopPresentation() {
+            // Record time for the last slide before stopping
+            recordSlideTime();
             presentationRunning = false;
             startBtn.textContent = 'Start';
             startBtn.classList.remove('running');
@@ -2012,88 +2014,117 @@ function generateScript(
             return div.innerHTML;
         }
 
+        let presenterViewBlobUrl = null;
+
         function openPresenterView() {
-            presenterViewWindow = window.open('', 'PresenterView', 'width=800,height=600');
-            if (!presenterViewWindow) {
-                alert('Presenter view blocked. Please allow popups for this site.');
+            if (presenterViewWindow && !presenterViewWindow.closed) {
+                presenterViewWindow.focus();
                 return;
             }
             const safeTitle = escapeHtmlForPv(metadata.title);
-            presenterViewWindow.document.write(\`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Presenter View - \${safeTitle}</title>
-                    <style>
-                        body { font-family: system-ui; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
-                        .pv-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; height: calc(100vh - 40px); }
-                        .pv-current { background: #222; border-radius: 8px; padding: 15px; }
-                        .pv-current img { width: 100%; border-radius: 4px; }
-                        .pv-sidebar { display: flex; flex-direction: column; gap: 15px; }
-                        .pv-next { background: #222; border-radius: 8px; padding: 15px; flex: 1; }
-                        .pv-next img { width: 100%; border-radius: 4px; opacity: 0.7; }
-                        .pv-notes { background: #222; border-radius: 8px; padding: 15px; flex: 2; overflow-y: auto; }
-                        .pv-timer { font-size: 48px; font-family: monospace; color: #557373; text-align: center; padding: 20px; }
-                        h3 { color: #557373; margin: 0 0 10px; font-size: 12px; text-transform: uppercase; }
-                        .pv-notes p { line-height: 1.6; color: #ccc; }
-                    </style>
-                </head>
-                <body>
-                    <div class="pv-container">
-                        <div class="pv-current">
-                            <h3>Current Slide</h3>
-                            <img id="pvCurrent" src="">
-                            <div class="pv-timer" id="pvTimer">00:00</div>
-                        </div>
-                        <div class="pv-sidebar">
-                            <div class="pv-next">
-                                <h3>Next Slide</h3>
-                                <img id="pvNext" src="">
-                            </div>
-                            <div class="pv-notes">
-                                <h3>Speaker Notes</h3>
-                                <div id="pvNotes"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <script>
-                        // Define update function on this window
-                        window.updateView = function(data) {
-                            document.getElementById('pvCurrent').src = data.currentImage;
-                            document.getElementById('pvNext').src = data.nextImage || '';
-                            document.getElementById('pvNotes').innerHTML = data.notes || '<p style="color:#666">No notes</p>';
-                            document.getElementById('pvTimer').textContent = data.timer;
-                            document.getElementById('pvTimer').style.color = data.timerColor;
-                        };
-                        // Callback to main window when ready
-                        if (typeof window.onPresenterReady === 'function') {
-                            window.onPresenterReady();
-                        }
-                    <\/script>
-                </body>
-                </html>
-            \`);
-            presenterViewWindow.document.close();
-            // Have child window call back when ready, which is more robust than a timeout
-            presenterViewWindow.onPresenterReady = updatePresenterView;
+            const presenterHtml = \`<!DOCTYPE html>
+<html>
+<head>
+    <title>Presenter View - \${safeTitle}</title>
+    <style>
+        body { font-family: system-ui; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        .pv-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; height: calc(100vh - 40px); }
+        .pv-current { background: #222; border-radius: 8px; padding: 15px; }
+        .pv-current img { width: 100%; border-radius: 4px; }
+        .pv-sidebar { display: flex; flex-direction: column; gap: 15px; }
+        .pv-next { background: #222; border-radius: 8px; padding: 15px; flex: 1; }
+        .pv-next img { width: 100%; border-radius: 4px; opacity: 0.7; }
+        .pv-notes { background: #222; border-radius: 8px; padding: 15px; flex: 2; overflow-y: auto; }
+        .pv-timer { font-size: 48px; font-family: monospace; color: #557373; text-align: center; padding: 20px; }
+        h3 { color: #557373; margin: 0 0 10px; font-size: 12px; text-transform: uppercase; }
+        .pv-notes p { line-height: 1.6; color: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="pv-container">
+        <div class="pv-current">
+            <h3>Current Slide</h3>
+            <img id="pvCurrent" src="">
+            <div class="pv-timer" id="pvTimer">00:00</div>
+        </div>
+        <div class="pv-sidebar">
+            <div class="pv-next">
+                <h3>Next Slide</h3>
+                <img id="pvNext" src="">
+            </div>
+            <div class="pv-notes">
+                <h3>Speaker Notes</h3>
+                <div id="pvNotes"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Listen for update messages from main window
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'presenterUpdate') {
+                const data = e.data;
+                document.getElementById('pvCurrent').src = data.currentImage;
+                document.getElementById('pvNext').src = data.nextImage || '';
+                document.getElementById('pvNotes').innerHTML = data.notes || '<p style="color:#666">No notes</p>';
+                document.getElementById('pvTimer').textContent = data.timer;
+                document.getElementById('pvTimer').style.color = data.timerColor;
+            }
+        });
+        // Notify main window we're ready
+        if (window.opener) {
+            window.opener.postMessage({ type: 'presenterReady' }, '*');
+        }
+    </script>
+</body>
+</html>\`;
+            // Create Blob URL instead of using document.write
+            const blob = new Blob([presenterHtml], { type: 'text/html' });
+            presenterViewBlobUrl = URL.createObjectURL(blob);
+            presenterViewWindow = window.open(presenterViewBlobUrl, 'PresenterView', 'width=800,height=600');
+            if (!presenterViewWindow) {
+                URL.revokeObjectURL(presenterViewBlobUrl);
+                presenterViewBlobUrl = null;
+                alert('Presenter view blocked. Please allow popups for this site.');
+                return;
+            }
+        }
+
+        // Listen for presenter view ready message
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'presenterReady') {
+                updatePresenterView();
+            }
+        });
+
+        // Clean up Blob URL when presenter view is closed
+        function cleanupPresenterView() {
+            if (presenterViewBlobUrl) {
+                URL.revokeObjectURL(presenterViewBlobUrl);
+                presenterViewBlobUrl = null;
+            }
+            presenterViewWindow = null;
         }
 
         function updatePresenterView() {
-            if (presenterViewWindow && !presenterViewWindow.closed && typeof presenterViewWindow.updateView === 'function') {
+            if (presenterViewWindow && !presenterViewWindow.closed) {
                 const slide = slides[currentIndex];
                 const nextSlide = slides[currentIndex + 1];
                 // Escape notes then convert newlines to paragraphs
                 const safeNotes = slide.notes
                     ? '<p>' + escapeHtmlForPv(slide.notes).replace(/\\n/g, '</p><p>') + '</p>'
                     : null;
-                presenterViewWindow.updateView({
+                presenterViewWindow.postMessage({
+                    type: 'presenterUpdate',
                     currentImage: slide.image,
                     nextImage: nextSlide ? nextSlide.image : null,
                     notes: safeNotes,
                     timer: formatTime(elapsedSeconds),
                     timerColor: elapsedSeconds > targetSeconds ? '#f44336' :
                                elapsedSeconds > targetSeconds * 0.9 ? '#FFC107' : '#557373'
-                });
+                }, '*');
+            } else if (presenterViewWindow === null && presenterViewBlobUrl) {
+                // Window was closed, clean up
+                cleanupPresenterView();
             }
         }
 
