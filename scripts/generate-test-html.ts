@@ -3,7 +3,7 @@
  * Generate a test HTML presentation from the sample talk track.
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parseTalkTrack } from '../src/parsers/talk-track.js';
@@ -26,6 +26,7 @@ async function main() {
   // Generate placeholder images for each slide
   const outputDir = join(__dirname, '../test-output');
   const imagesDir = join(outputDir, 'images');
+  mkdirSync(imagesDir, { recursive: true });
 
   for (const slide of talkTrack.slides) {
     const placeholderSvg = generatePlaceholderSlide(slide.title, slide.position);

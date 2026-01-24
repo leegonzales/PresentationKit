@@ -1390,7 +1390,6 @@ function generateScript(
 
         // Update section panel current selection
         function updateSectionPanelSelection() {
-            const currentSlide = slides[currentIndex];
             document.querySelectorAll('.section-item').forEach((item) => {
                 const sectionIdx = parseInt(item.dataset.section);
                 const section = sections[sectionIdx];
@@ -1439,13 +1438,20 @@ function generateScript(
             // Limit to 10 results
             results = results.slice(0, 10);
 
+            // Escape HTML to prevent XSS
+            const escapeForHtml = (text) => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            };
+
             jumpResults.innerHTML = results.map((r, i) => \`
                 <div class="jump-result\${i === jumpSelectedIndex ? ' selected' : ''}"
                      data-index="\${r.idx}"
                      onclick="jumpToSlide(\${r.idx})">
                     <span class="jump-result-number">\${r.idx + 1}</span>
-                    <span class="jump-result-title">\${r.slide.title}</span>
-                    <span class="jump-result-section">\${r.slide.section}</span>
+                    <span class="jump-result-title">\${escapeForHtml(r.slide.title)}</span>
+                    <span class="jump-result-section">\${escapeForHtml(r.slide.section)}</span>
                 </div>
             \`).join('');
 
