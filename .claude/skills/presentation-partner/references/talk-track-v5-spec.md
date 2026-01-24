@@ -338,7 +338,7 @@ my-presentation/
 PresentationKit provides these parser functions:
 
 ```typescript
-import { parseTalkTrack, validateTalkTrack } from 'presentationkit';
+import { parseTalkTrack, validateTalkTrack } from '@leegonzales/presentation-kit';
 
 // Parse markdown content
 const talkTrack = parseTalkTrack(markdownContent);
