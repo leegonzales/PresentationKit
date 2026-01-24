@@ -533,6 +533,432 @@ function generateStyles(options: Required<HtmlOptions>): string {
         .loading-indicator.visible {
             display: block;
         }
+
+        /* Grid Overview */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            z-index: 900;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .grid-overlay.visible {
+            display: block;
+        }
+
+        .grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .grid-header h2 {
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .grid-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        .grid-close:hover {
+            color: white;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding-bottom: 20px;
+        }
+
+        .grid-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .grid-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .grid-item.current {
+            border-color: var(--primary);
+        }
+
+        .grid-item img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        .grid-item-info {
+            padding: 10px 12px;
+        }
+
+        .grid-item-number {
+            font-size: 11px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .grid-item-title {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .grid-item-section {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        /* Talk Track Drawer */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--control-bg);
+            border-left: 1px solid var(--control-border);
+            z-index: 800;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drawer.visible {
+            right: 0;
+        }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--control-border);
+        }
+
+        .drawer-header h3 {
+            color: var(--primary);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .drawer-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .drawer-slide {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--control-border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .drawer-slide:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .drawer-slide.current {
+            background: rgba(85, 115, 115, 0.2);
+            border-left: 3px solid var(--primary);
+        }
+
+        .drawer-slide-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .drawer-slide-number {
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .drawer-slide-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .drawer-slide-text {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Thumbnail Filmstrip */
+        .filmstrip {
+            display: none;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 1px solid var(--control-border);
+            padding: 10px 15px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .filmstrip.visible {
+            display: block;
+        }
+
+        .filmstrip-inner {
+            display: inline-flex;
+            gap: 8px;
+        }
+
+        .filmstrip-item {
+            flex-shrink: 0;
+            width: 120px;
+            cursor: pointer;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+            opacity: 0.6;
+        }
+
+        .filmstrip-item:hover {
+            opacity: 0.9;
+        }
+
+        .filmstrip-item.current {
+            border-color: var(--primary);
+            opacity: 1;
+        }
+
+        .filmstrip-item img {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+        }
+
+        .filmstrip-item-label {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 3px 6px;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+        }
+
+        /* Section Navigation Panel */
+        .section-panel {
+            position: fixed;
+            left: -300px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--control-bg);
+            border: 1px solid var(--control-border);
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            padding: 15px 20px;
+            z-index: 700;
+            transition: left 0.3s ease;
+        }
+
+        .section-panel.visible {
+            left: 0;
+        }
+
+        .section-panel h4 {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .section-list {
+            list-style: none;
+        }
+
+        .section-list li {
+            margin-bottom: 8px;
+        }
+
+        .section-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .section-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .section-item.current {
+            background: rgba(85, 115, 115, 0.3);
+        }
+
+        .section-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .section-name {
+            font-size: 13px;
+            color: white;
+        }
+
+        .section-count {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-left: auto;
+        }
+
+        /* Quick Jump Dialog */
+        .jump-dialog {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--control-bg);
+            border: 1px solid var(--control-border);
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            z-index: 950;
+            display: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .jump-dialog.visible {
+            display: block;
+        }
+
+        .jump-input-wrapper {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--control-border);
+        }
+
+        .jump-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 10px 15px;
+            font-size: 16px;
+            color: white;
+            outline: none;
+        }
+
+        .jump-input:focus {
+            border-color: var(--primary);
+        }
+
+        .jump-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .jump-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .jump-result {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .jump-result:hover,
+        .jump-result.selected {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .jump-result-number {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 600;
+            min-width: 30px;
+        }
+
+        .jump-result-title {
+            font-size: 14px;
+            color: white;
+        }
+
+        .jump-result-section {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-left: auto;
+        }
+
+        .jump-hint {
+            padding: 10px 20px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            border-top: 1px solid var(--control-border);
+        }
+
+        /* Clock Display */
+        .clock {
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Adjust presentation when drawer is open */
+        .presentation.drawer-open .slide-container {
+            margin-right: 400px;
+            transition: margin-right 0.3s ease;
+        }
+
+        /* Filmstrip adjusts control bar */
+        .presentation.filmstrip-open .control-bar {
+            border-top: none;
+        }
     `;
 }
 
@@ -604,6 +1030,12 @@ function generateScript(
         let showNotes = false;
         let showTimer = true;
         let showHelp = false;
+        let showGrid = false;
+        let showDrawer = false;
+        let showFilmstrip = false;
+        let showSectionPanel = false;
+        let showJumpDialog = false;
+        let jumpSelectedIndex = 0;
         let presentationRunning = false;
         let autoAdvance = true;
         let timerInterval = null;
@@ -628,6 +1060,15 @@ function generateScript(
         const modeAuto = document.getElementById('modeAuto');
         const modeManual = document.getElementById('modeManual');
         const audioPlayer = document.getElementById('audioPlayer');
+        const gridOverlay = document.getElementById('gridOverlay');
+        const drawer = document.getElementById('drawer');
+        const filmstrip = document.getElementById('filmstrip');
+        const sectionPanel = document.getElementById('sectionPanel');
+        const jumpDialog = document.getElementById('jumpDialog');
+        const jumpInput = document.getElementById('jumpInput');
+        const jumpResults = document.getElementById('jumpResults');
+        const clockEl = document.getElementById('clock');
+        const presentation = document.querySelector('.presentation');
 
         // Calculate target time from audio or metadata
         function calculateTargetTime() {
@@ -706,6 +1147,18 @@ function generateScript(
 
             // Reset audio indicator
             audioIndicator.classList.remove('active');
+
+            // Update UI elements if visible
+            if (showGrid) updateGridSelection();
+            if (showDrawer) {
+                updateDrawerSelection();
+                scrollDrawerToCurrentSlide();
+            }
+            if (showFilmstrip) {
+                updateFilmstripSelection();
+                scrollFilmstripToCurrentSlide();
+            }
+            if (showSectionPanel) updateSectionPanelSelection();
         }
 
         // Navigate to next slide
@@ -846,6 +1299,219 @@ function generateScript(
             modeManual.classList.toggle('active', !autoAdvance);
         }
 
+        // Toggle grid overlay
+        function toggleGrid() {
+            showGrid = !showGrid;
+            gridOverlay.classList.toggle('visible', showGrid);
+            if (showGrid) {
+                updateGridSelection();
+            }
+        }
+
+        // Update grid current selection
+        function updateGridSelection() {
+            document.querySelectorAll('.grid-item').forEach((item, idx) => {
+                item.classList.toggle('current', idx === currentIndex);
+            });
+        }
+
+        // Go to slide from grid
+        function goToSlideFromGrid(index) {
+            goToSlide(index);
+            toggleGrid();
+        }
+
+        // Toggle drawer
+        function toggleDrawer() {
+            showDrawer = !showDrawer;
+            drawer.classList.toggle('visible', showDrawer);
+            presentation.classList.toggle('drawer-open', showDrawer);
+            if (showDrawer) {
+                updateDrawerSelection();
+                scrollDrawerToCurrentSlide();
+            }
+        }
+
+        // Update drawer current selection
+        function updateDrawerSelection() {
+            document.querySelectorAll('.drawer-slide').forEach((item, idx) => {
+                item.classList.toggle('current', idx === currentIndex);
+            });
+        }
+
+        // Scroll drawer to current slide
+        function scrollDrawerToCurrentSlide() {
+            const currentItem = document.querySelector('.drawer-slide.current');
+            if (currentItem) {
+                currentItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Go to slide from drawer
+        function goToSlideFromDrawer(index) {
+            goToSlide(index);
+            updateDrawerSelection();
+        }
+
+        // Toggle filmstrip
+        function toggleFilmstrip() {
+            showFilmstrip = !showFilmstrip;
+            filmstrip.classList.toggle('visible', showFilmstrip);
+            presentation.classList.toggle('filmstrip-open', showFilmstrip);
+            if (showFilmstrip) {
+                updateFilmstripSelection();
+                scrollFilmstripToCurrentSlide();
+            }
+        }
+
+        // Update filmstrip current selection
+        function updateFilmstripSelection() {
+            document.querySelectorAll('.filmstrip-item').forEach((item, idx) => {
+                item.classList.toggle('current', idx === currentIndex);
+            });
+        }
+
+        // Scroll filmstrip to current slide
+        function scrollFilmstripToCurrentSlide() {
+            const currentItem = document.querySelector('.filmstrip-item.current');
+            if (currentItem) {
+                currentItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
+        // Toggle section panel
+        function toggleSectionPanel() {
+            showSectionPanel = !showSectionPanel;
+            sectionPanel.classList.toggle('visible', showSectionPanel);
+            if (showSectionPanel) {
+                updateSectionPanelSelection();
+            }
+        }
+
+        // Update section panel current selection
+        function updateSectionPanelSelection() {
+            const currentSlide = slides[currentIndex];
+            document.querySelectorAll('.section-item').forEach((item) => {
+                const sectionIdx = parseInt(item.dataset.section);
+                const section = sections[sectionIdx];
+                const isInSection = currentIndex >= section.startIndex &&
+                                   currentIndex < section.startIndex + section.slideCount;
+                item.classList.toggle('current', isInSection);
+            });
+        }
+
+        // Go to section
+        function goToSection(slideIndex) {
+            goToSlide(slideIndex);
+            updateSectionPanelSelection();
+        }
+
+        // Toggle jump dialog
+        function toggleJumpDialog() {
+            showJumpDialog = !showJumpDialog;
+            jumpDialog.classList.toggle('visible', showJumpDialog);
+            if (showJumpDialog) {
+                jumpInput.value = '';
+                jumpInput.focus();
+                jumpSelectedIndex = 0;
+                updateJumpResults('');
+            }
+        }
+
+        // Update jump results based on query
+        function updateJumpResults(query) {
+            const q = query.toLowerCase().trim();
+            let results = slides.map((slide, idx) => ({ slide, idx }));
+
+            if (q) {
+                // Filter by number or title
+                if (/^\\d+$/.test(q)) {
+                    const num = parseInt(q);
+                    results = results.filter(r => (r.idx + 1).toString().includes(q));
+                } else {
+                    results = results.filter(r =>
+                        r.slide.title.toLowerCase().includes(q) ||
+                        r.slide.section.toLowerCase().includes(q)
+                    );
+                }
+            }
+
+            // Limit to 10 results
+            results = results.slice(0, 10);
+
+            jumpResults.innerHTML = results.map((r, i) => \`
+                <div class="jump-result\${i === jumpSelectedIndex ? ' selected' : ''}"
+                     data-index="\${r.idx}"
+                     onclick="jumpToSlide(\${r.idx})">
+                    <span class="jump-result-number">\${r.idx + 1}</span>
+                    <span class="jump-result-title">\${r.slide.title}</span>
+                    <span class="jump-result-section">\${r.slide.section}</span>
+                </div>
+            \`).join('');
+
+            return results;
+        }
+
+        // Jump to slide from dialog
+        function jumpToSlide(index) {
+            goToSlide(index);
+            toggleJumpDialog();
+        }
+
+        // Handle jump input
+        jumpInput.addEventListener('input', (e) => {
+            jumpSelectedIndex = 0;
+            updateJumpResults(e.target.value);
+        });
+
+        // Handle jump keyboard navigation
+        jumpInput.addEventListener('keydown', (e) => {
+            const results = document.querySelectorAll('.jump-result');
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    jumpSelectedIndex = Math.min(jumpSelectedIndex + 1, results.length - 1);
+                    updateJumpSelection();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    jumpSelectedIndex = Math.max(jumpSelectedIndex - 1, 0);
+                    updateJumpSelection();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    const selected = results[jumpSelectedIndex];
+                    if (selected) {
+                        jumpToSlide(parseInt(selected.dataset.index));
+                    }
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    toggleJumpDialog();
+                    break;
+            }
+        });
+
+        // Update jump selection visual
+        function updateJumpSelection() {
+            document.querySelectorAll('.jump-result').forEach((item, i) => {
+                item.classList.toggle('selected', i === jumpSelectedIndex);
+            });
+        }
+
+        // Clock update
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const mins = now.getMinutes().toString().padStart(2, '0');
+            clockEl.textContent = hours + ':' + mins;
+        }
+
+        // Start clock
+        setInterval(updateClock, 1000);
+        updateClock();
+
         // Print presentation
         function printPresentation() {
             window.print();
@@ -902,8 +1568,18 @@ function generateScript(
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
+            // Don't capture if jump dialog is open (except Escape)
+            if (showJumpDialog && e.key !== 'Escape') {
+                return;
+            }
+
             // Don't capture if help is visible
             if (showHelp && e.key !== 'Escape' && e.key !== 'h' && e.key !== 'H' && e.key !== '?') {
+                return;
+            }
+
+            // Don't capture if grid is visible (except Escape and G)
+            if (showGrid && e.key !== 'Escape' && e.key !== 'g' && e.key !== 'G') {
                 return;
             }
 
@@ -960,11 +1636,41 @@ function generateScript(
                     toggleHelp();
                     break;
                 case 'Escape':
-                    if (showHelp) {
+                    if (showJumpDialog) {
+                        toggleJumpDialog();
+                    } else if (showGrid) {
+                        toggleGrid();
+                    } else if (showHelp) {
                         toggleHelp();
                     } else if (showNotes) {
                         toggleNotes();
+                    } else if (showDrawer) {
+                        toggleDrawer();
+                    } else if (showSectionPanel) {
+                        toggleSectionPanel();
+                    } else if (showFilmstrip) {
+                        toggleFilmstrip();
                     }
+                    break;
+                case 'g':
+                case 'G':
+                    toggleGrid();
+                    break;
+                case 'd':
+                case 'D':
+                    toggleDrawer();
+                    break;
+                case 'b':
+                case 'B':
+                    toggleFilmstrip();
+                    break;
+                case 's':
+                case 'S':
+                    toggleSectionPanel();
+                    break;
+                case '/':
+                    e.preventDefault();
+                    toggleJumpDialog();
                     break;
                 case 'f':
                 case 'F':
@@ -1029,12 +1735,134 @@ function generateHelpOverlay(): string {
             </div>
 
             <div class="help-section">
+                <h3>Views</h3>
+                <div class="help-grid">
+                    <kbd>G</kbd> <span>Grid overview (all slides)</span>
+                    <kbd>D</kbd> <span>Talk track drawer</span>
+                    <kbd>B</kbd> <span>Thumbnail filmstrip</span>
+                    <kbd>S</kbd> <span>Section navigation</span>
+                    <kbd>/</kbd> <span>Quick jump to slide</span>
+                </div>
+            </div>
+
+            <div class="help-section">
                 <h3>Touch Gestures</h3>
                 <div class="help-grid">
                     <kbd>Swipe Left</kbd> <span>Next slide</span>
                     <kbd>Swipe Right</kbd> <span>Previous slide</span>
                 </div>
             </div>
+        </div>
+    </div>`;
+}
+
+/**
+ * Generates the thumbnail filmstrip HTML.
+ */
+function generateFilmstrip(slides: PreparedHtmlSlide[]): string {
+  const filmstripItems = slides.map((slide, index) => `
+            <div class="filmstrip-item${index === 0 ? ' current' : ''}" data-index="${index}" onclick="goToSlide(${index})">
+                <img src="${escapeHtml(slide.imagePath)}" alt="${escapeHtml(slide.title)}" loading="lazy">
+                <div class="filmstrip-item-label">${index + 1}</div>
+            </div>`).join('');
+
+  return `
+        <div class="filmstrip" id="filmstrip">
+            <div class="filmstrip-inner">
+                ${filmstripItems}
+            </div>
+        </div>`;
+}
+
+/**
+ * Generates the grid overlay HTML for thumbnail view of all slides.
+ */
+function generateGridOverlay(slides: PreparedHtmlSlide[]): string {
+  const gridItems = slides.map((slide, index) => `
+        <div class="grid-item${index === 0 ? ' current' : ''}" data-index="${index}" onclick="goToSlideFromGrid(${index})">
+            <img src="${escapeHtml(slide.imagePath)}" alt="${escapeHtml(slide.title)}" loading="lazy">
+            <div class="grid-item-info">
+                <div class="grid-item-number">${index + 1}</div>
+                <div class="grid-item-title">${escapeHtml(slide.title)}</div>
+                <div class="grid-item-section">${escapeHtml(slide.section)}</div>
+            </div>
+        </div>`).join('');
+
+  return `
+    <div class="grid-overlay" id="gridOverlay">
+        <div class="grid-header">
+            <h2>All Slides</h2>
+            <button class="grid-close" onclick="toggleGrid()">&times;</button>
+        </div>
+        <div class="grid-container">
+            ${gridItems}
+        </div>
+    </div>`;
+}
+
+/**
+ * Generates the talk track drawer HTML.
+ */
+function generateDrawer(slides: PreparedHtmlSlide[]): string {
+  const drawerSlides = slides.map((slide, index) => {
+    // Use speaker notes or a placeholder
+    const talkTrackText = slide.speakerNotes || 'No talk track for this slide.';
+    return `
+        <div class="drawer-slide${index === 0 ? ' current' : ''}" data-index="${index}" onclick="goToSlideFromDrawer(${index})">
+            <div class="drawer-slide-header">
+                <span class="drawer-slide-number">${index + 1}</span>
+                <span class="drawer-slide-title">${escapeHtml(slide.title)}</span>
+            </div>
+            <div class="drawer-slide-text">${escapeHtml(talkTrackText)}</div>
+        </div>`;
+  }).join('');
+
+  return `
+    <div class="drawer" id="drawer">
+        <div class="drawer-header">
+            <h3>Talk Track</h3>
+            <button class="drawer-close" onclick="toggleDrawer()">&times;</button>
+        </div>
+        <div class="drawer-content">
+            ${drawerSlides}
+        </div>
+    </div>`;
+}
+
+/**
+ * Generates the section navigation panel HTML.
+ */
+function generateSectionPanel(sections: SectionInfo[]): string {
+  const sectionItems = sections.map((section, index) => `
+        <li>
+            <div class="section-item${index === 0 ? ' current' : ''}" data-section="${index}" onclick="goToSection(${section.startIndex})">
+                <span class="section-dot" style="background: ${escapeHtml(section.color)}"></span>
+                <span class="section-name">${escapeHtml(section.name)}</span>
+                <span class="section-count">${section.slideCount}</span>
+            </div>
+        </li>`).join('');
+
+  return `
+    <div class="section-panel" id="sectionPanel">
+        <h4>Sections</h4>
+        <ul class="section-list">
+            ${sectionItems}
+        </ul>
+    </div>`;
+}
+
+/**
+ * Generates the quick jump dialog HTML.
+ */
+function generateJumpDialog(): string {
+  return `
+    <div class="jump-dialog" id="jumpDialog">
+        <div class="jump-input-wrapper">
+            <input type="text" class="jump-input" id="jumpInput" placeholder="Type slide number or title..." autocomplete="off">
+        </div>
+        <div class="jump-results" id="jumpResults"></div>
+        <div class="jump-hint">
+            <kbd>Enter</kbd> to jump &middot; <kbd>↑↓</kbd> to navigate &middot; <kbd>Esc</kbd> to close
         </div>
     </div>`;
 }
@@ -1079,6 +1907,8 @@ export function generateHtmlPresentation(
             <div class="speaker-notes-header">Speaker Notes</div>
             <div id="notesText"></div>
         </div>
+
+        ${generateFilmstrip(slides)}
 
         <div class="control-bar">
             <!-- Timer -->
@@ -1129,10 +1959,23 @@ export function generateHtmlPresentation(
                 <button class="mode-btn active" id="modeAuto" onclick="setMode('auto')">Auto</button>
                 <button class="mode-btn" id="modeManual" onclick="setMode('manual')">Manual</button>
             </div>
+
+            <div class="divider"></div>
+
+            <!-- Clock -->
+            <div class="clock" id="clock">--:--</div>
         </div>
     </div>
 
     ${generateHelpOverlay()}
+
+    ${generateGridOverlay(slides)}
+
+    ${generateDrawer(slides)}
+
+    ${generateSectionPanel(sections)}
+
+    ${generateJumpDialog()}
 
     <audio id="audioPlayer" preload="auto"></audio>
 
