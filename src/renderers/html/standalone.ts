@@ -17,14 +17,14 @@
 
 import { execa } from 'execa';
 import { readFile, writeFile, mkdir, access, stat } from 'node:fs/promises';
-import { dirname, join, resolve, basename, extname } from 'node:path';
+import { dirname, join, resolve, basename, extname, isAbsolute } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { rm } from 'node:fs/promises';
 
 import type { TalkTrackV5, Section } from '../../parsers/types.js';
 import type { Timeline, TimelineSlide } from '../../generators/timeline/types.js';
-import { stripSemanticTags, getSectionColor, getSectionName } from './utils.js';
+import { stripSemanticTags, getSectionColor, getSectionName, escapeHtml, escapeJs } from './utils.js';
 
 /**
  * Options for standalone HTML rendering.
@@ -129,34 +129,8 @@ async function wavToMp3Base64(wavPath: string, bitrate: string = '64k'): Promise
     return '';
   } finally {
     // Clean up temp file
-    await rm(tmpPath, { force: true }).catch(() => {});
+    await rm(tmpPath, { force: true }).catch((err) => console.warn(`Failed to clean up temp file ${tmpPath}:`, err));
   }
-}
-
-/**
- * Escapes HTML special characters for safe rendering.
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Escapes a string for safe use in JavaScript template literals.
- * Also escapes '<' to prevent </script> injection (XSS prevention).
- */
-function escapeJs(text: string): string {
-  return text
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '')
-    .replace(/</g, '\\u003C');
 }
 
 
@@ -219,7 +193,7 @@ async function prepareSlides(
     let imageDataUri = '';
     const imagePath = content?.imagePath || slideDef.image;
     if (imagePath) {
-      const fullImagePath = imagePath.startsWith('/')
+      const fullImagePath = isAbsolute(imagePath)
         ? imagePath
         : join(sourceDir, imagePath);
       const { mime, data } = await imageToBase64(fullImagePath);
@@ -236,7 +210,7 @@ async function prepareSlides(
     // Audio paths are relative to the output directory (audioBaseDir), not sourceDir
     let audioDataUri = '';
     if (timelineSlide?.audioPath) {
-      const audioPath = timelineSlide.audioPath.startsWith('/')
+      const audioPath = isAbsolute(timelineSlide.audioPath)
         ? timelineSlide.audioPath
         : join(audioBaseDir, timelineSlide.audioPath);
       const mp3Data = await wavToMp3Base64(audioPath, options.mp3Bitrate);

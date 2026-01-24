@@ -88,3 +88,35 @@ export function formatDate(date?: string): string {
     return date;
   }
 }
+
+/**
+ * Escapes HTML special characters for safe rendering.
+ *
+ * @param text - Text that may contain HTML special characters
+ * @returns Text with HTML special characters escaped
+ */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Escapes a string for safe use in JavaScript template literals.
+ * Also escapes '<' to prevent </script> injection (XSS prevention).
+ *
+ * @param text - Text to escape for JavaScript
+ * @returns Text safe for use in JavaScript strings
+ */
+export function escapeJs(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '')
+    .replace(/</g, '\\u003C');
+}

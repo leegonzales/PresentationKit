@@ -17,30 +17,7 @@
 
 import type { HtmlOptions, PreparedHtmlSlide, PreparedHtmlMetadata, SectionInfo } from './types.js';
 import { DEFAULT_HTML_OPTIONS } from './types.js';
-
-/**
- * Escapes HTML special characters for safe rendering.
- */
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Escapes a string for safe use in JavaScript.
- */
-function escapeJs(text: string): string {
-  return text
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r');
-}
+import { escapeHtml, escapeJs } from './utils.js';
 
 /**
  * Generates CSS styles for the HTML presentation.
