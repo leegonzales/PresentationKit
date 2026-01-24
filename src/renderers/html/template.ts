@@ -1425,7 +1425,6 @@ function generateScript(
             if (q) {
                 // Filter by number or title
                 if (/^\\d+$/.test(q)) {
-                    const num = parseInt(q);
                     results = results.filter(r => (r.idx + 1).toString().includes(q));
                 } else {
                     results = results.filter(r =>
