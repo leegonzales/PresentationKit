@@ -191,7 +191,7 @@ async function htmlAction(
     console.log('  - Fullscreen mode (F key)');
     console.log('  - Speaker notes (N key)');
     if (options.standalone) {
-      console.log('  - Auto-advance mode (A key)');
+      console.log('  - Auto-advance mode (Y key)');
       console.log('  - All assets embedded (works offline)');
     }
 

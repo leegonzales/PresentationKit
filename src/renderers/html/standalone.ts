@@ -116,12 +116,14 @@ async function wavToMp3Base64(wavPath: string, bitrate: string = '64k'): Promise
       '-b:a', bitrate,
       '-ac', '1', // Mono for speech
       tmpPath,
-    ], { stdio: 'ignore' });
+    ]);
 
     const buffer = await readFile(tmpPath);
     return buffer.toString('base64');
-  } catch (error) {
-    const details = error instanceof Error ? error.message : String(error);
+  } catch (error: unknown) {
+    // execa errors include stderr for better diagnostics
+    const execaError = error as { stderr?: string; message?: string };
+    const details = execaError.stderr || execaError.message || String(error);
     console.warn(`Warning: Failed to convert ${wavPath} to MP3. Details: ${details}`);
     return '';
   } finally {
@@ -143,7 +145,8 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Escapes a string for safe use in JavaScript.
+ * Escapes a string for safe use in JavaScript template literals.
+ * Also escapes '<' to prevent </script> injection (XSS prevention).
  */
 function escapeJs(text: string): string {
   return text
@@ -151,7 +154,8 @@ function escapeJs(text: string): string {
     .replace(/'/g, "\\'")
     .replace(/"/g, '\\"')
     .replace(/\n/g, '\\n')
-    .replace(/\r/g, '');
+    .replace(/\r/g, '')
+    .replace(/</g, '\\u003C');
 }
 
 /**
