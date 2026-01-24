@@ -63,6 +63,8 @@ export interface CostEntry {
 export interface BuildSource {
   /** Path to the talk track file */
   talkTrack: string;
+  /** Directory containing the talk track (used for resolving relative asset paths) */
+  sourceDir: string;
   /** Content hash for cache invalidation */
   hash: string;
 }

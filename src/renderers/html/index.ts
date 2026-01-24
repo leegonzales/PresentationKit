@@ -56,6 +56,12 @@ export type {
 } from './types.js';
 export { DEFAULT_HTML_OPTIONS } from './types.js';
 
+// Re-export standalone renderer
+export {
+  renderStandaloneHtml,
+  type StandaloneHtmlOptions,
+} from './standalone.js';
+
 /**
  * Strips semantic tags from audio text for clean display.
  * Removes tags like [HOOK], [KEY_POINT], [PAUSE:500], etc.

@@ -1607,6 +1607,11 @@ function generateScript(
             modeManual.classList.toggle('active', !autoAdvance);
         }
 
+        // Toggle auto-advance mode (keyboard shortcut)
+        function toggleAutoAdvance() {
+            setMode(autoAdvance ? 'manual' : 'auto');
+        }
+
         // Toggle grid overlay
         function toggleGrid() {
             showGrid = !showGrid;
@@ -2317,6 +2322,10 @@ function generateScript(
                 case 'C':
                     togglePacing();
                     break;
+                case 'y':
+                case 'Y':
+                    toggleAutoAdvance();
+                    break;
                 case 'B':
                     if (e.shiftKey) {
                         toggleRehearsalStats();
@@ -2376,6 +2385,7 @@ function generateHelpOverlay(): string {
                 <h3>Controls</h3>
                 <div class="help-grid">
                     <kbd>Enter</kbd> <span>Start/Stop presentation</span>
+                    <kbd>Y</kbd> <span>Toggle auto-advance mode</span>
                     <kbd>N</kbd> <span>Toggle speaker notes</span>
                     <kbd>T</kbd> <span>Toggle timer</span>
                     <kbd>R</kbd> <span>Reset timer</span>
