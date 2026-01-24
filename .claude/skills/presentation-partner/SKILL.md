@@ -298,6 +298,29 @@ pk validate talk-track.md
 pk build talk-track.md --output html,video,notes
 ```
 
+### Rehearsal & Delivery
+
+**When:** After generating HTML, for practice runs
+
+The HTML output includes built-in presenter tools. Press `?` during presentation for the full shortcut reference.
+
+**Key rehearsal features:**
+| Shortcut | Feature | Use Case |
+|----------|---------|----------|
+| `C` | Pacing guide | Compare actual vs target timing per slide |
+| `Shift+B` | Rehearsal stats | See time spent on each slide |
+| `O` | Presenter view | Notes + next slide in separate window |
+| `b` / `W` | Blank screen | Black or white screen for pauses |
+| `L` | Laser pointer | Highlight areas during presentation |
+| `A` | Annotation mode | Draw on slides (clears on advance) |
+
+**Rehearsal workflow:**
+1. Open generated HTML in browser
+2. Press `C` to show pacing guide
+3. Run through presentation (timing is tracked)
+4. Press `Shift+B` to review per-slide timing
+5. Adjust narration in Talk Track if slides run long/short
+
 ---
 
 ## Anti-Patterns
@@ -390,6 +413,6 @@ If no → Return to interview, check for generic content, verify evidence is rea
 
 ---
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Compatible with:** Talk Track v5, v6
 **PresentationKit:** See CLAUDE.md for CLI commands
