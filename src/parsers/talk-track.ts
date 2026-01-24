@@ -42,7 +42,7 @@ const BrandConfigSchema = z.object({
 });
 
 const FrontmatterSchema = z.object({
-  version: z.literal(5),
+  version: z.union([z.literal(5), z.literal(6)]),
   title: z.string().min(1),
   subtitle: z.string().optional(),
   author: z.string().min(1),
@@ -117,7 +117,11 @@ function parseSlidesTable(content: string, sections: Section[]): SlideDefinition
   }
 
   const tableContent = slidesMatch[1].trim();
-  const lines = tableContent.split('\n').filter((line) => line.trim());
+  // Filter empty lines and markdown separators (---)
+  const lines = tableContent.split('\n').filter((line) => {
+    const trimmed = line.trim();
+    return trimmed && !trimmed.match(/^-{3,}$/);
+  });
 
   // Validate table structure
   if (lines.length < 3) {

@@ -32,3 +32,6 @@ out/
 
 # Build artifacts
 *.tsbuildinfo
+
+# Claude Code local settings (keep skills tracked)
+.claude/settings.local.json

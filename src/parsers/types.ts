@@ -97,8 +97,8 @@ export interface SlideContent {
  * The authoritative source for presentation content.
  */
 export interface TalkTrackV5 {
-  /** Format version, must be 5 */
-  version: 5;
+  /** Format version, must be 5 or 6 */
+  version: 5 | 6;
   /** Presentation title */
   title: string;
   /** Presentation subtitle */
