@@ -7,7 +7,7 @@ metadata:
 
 ## When to use
 
-Use this skills whenever you are dealing with Remotion code to obtain the domain-specific knowledge.
+Use this skill whenever you are dealing with Remotion code to obtain the domain-specific knowledge.
 
 ## How to use
 
