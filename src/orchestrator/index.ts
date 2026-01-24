@@ -300,10 +300,10 @@ async function executeParsing(
   const talkTrackPath = join(outputDir, 'talktrack.json');
   await writeFile(talkTrackPath, JSON.stringify(serializeTalkTrack(talkTrack), null, 2));
 
-  // Extract and update image paths from slide definitions
-  const imagePaths = talkTrack.slides
-    .map((s) => s.image)
-    .filter((img): img is string => !!img);
+  // Extract image paths from slide content (has full relative paths)
+  const imagePaths = Array.from(talkTrack.slideContent.values())
+    .map((sc) => sc.imagePath)
+    .filter((p): p is string => !!p);
   await stateMachine.updateAssets({ images: imagePaths });
 }
 

@@ -71,8 +71,11 @@ export const Slide: FC<SlideProps> = ({ slide, assetsPath, isActive = true }) =>
   // For presentation slides, 'cover' typically works best as they're designed for 16:9
   const objectFit: 'cover' | 'contain' = 'cover';
 
-  // Build the image path - use staticFile for Remotion bundling
-  const imagePath = staticFile(slide.imagePath);
+  // Build the image path - use staticFile for relative paths, direct path for absolute
+  // Absolute paths (starting with /) are passed through directly
+  const imagePath = slide.imagePath.startsWith('/')
+    ? slide.imagePath
+    : staticFile(slide.imagePath);
 
   return (
     <AbsoluteFill

@@ -14,6 +14,7 @@ import type {
   AudioManifest,
   AudioManifestEntry,
   Caption,
+  WordTiming,
 } from './types.js';
 import {
   alignCaptionsToAudio,
@@ -180,19 +181,59 @@ export function buildTimeline(
 }
 
 /**
+ * Builds captions directly from word timings (Whisper transcription).
+ * Groups words into sentence-like segments based on punctuation.
+ */
+function buildCaptionsFromWordTimings(wordTimings: WordTiming[]): Caption[] {
+  const captions: Caption[] = [];
+  let currentWords: WordTiming[] = [];
+  let sentenceStart = 0;
+
+  for (let i = 0; i < wordTimings.length; i++) {
+    const word = wordTimings[i];
+    currentWords.push(word);
+
+    // Check if this word ends a sentence (ends with . ! ?)
+    const endsWithPunctuation = /[.!?]$/.test(word.word);
+    const isLastWord = i === wordTimings.length - 1;
+
+    // Create caption if sentence ends or we have enough words (max ~15 words per caption)
+    if (endsWithPunctuation || isLastWord || currentWords.length >= 15) {
+      if (currentWords.length > 0) {
+        const text = currentWords.map(w => w.word).join(' ');
+        captions.push({
+          text,
+          startTime: sentenceStart,
+          endTime: word.end,
+          words: currentWords.map(w => ({
+            word: w.word,
+            start: w.start,
+            end: w.end,
+          })),
+        });
+
+        // Reset for next sentence
+        currentWords = [];
+        sentenceStart = word.end;
+      }
+    }
+  }
+
+  return captions;
+}
+
+/**
  * Builds captions for a slide, using word timings if available.
+ * Returns empty array if no word timings - Kokoro without Whisper gets no captions.
  */
 function buildCaptions(text: string, audioEntry: AudioManifestEntry): Caption[] {
   if (audioEntry.wordTimings && audioEntry.wordTimings.length > 0) {
-    // Use precise word timings from ElevenLabs
-    return alignCaptionsToAudio(text, audioEntry.wordTimings);
+    // Use Whisper word timings directly - don't try to align with original text
+    return buildCaptionsFromWordTimings(audioEntry.wordTimings);
   }
 
-  // Estimate timings for Kokoro (no word-level data)
-  const estimatedCaptions = estimateCaptionTimings(text, 0);
-
-  // Scale to match actual audio duration
-  return scaleCaptionsToAudioDuration(estimatedCaptions, audioEntry.duration);
+  // No word timings (Kokoro without Whisper) - skip captions entirely
+  return [];
 }
 
 /**

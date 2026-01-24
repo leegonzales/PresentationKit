@@ -168,9 +168,15 @@ const SlideSequence: FC<SlideSequenceProps> = ({
         {/* Slide image with section indicator */}
         <Slide slide={slide} assetsPath={assetsPath} isActive={true} />
 
-        {/* Audio for this slide */}
+        {/* Audio for this slide - use staticFile for relative paths, direct for absolute */}
         {slide.audioPath && (
-          <Audio src={staticFile(slide.audioPath)} />
+          <Audio
+            src={
+              slide.audioPath.startsWith('/')
+                ? slide.audioPath
+                : staticFile(slide.audioPath)
+            }
+          />
         )}
 
         {/* Caption overlay */}

@@ -92,20 +92,17 @@ function createTempDir(): string {
 }
 
 /**
- * Writes timeline data to a temporary JSON file.
+ * Serializes timeline for Remotion props.
+ * Converts Map to object for JSON serialization.
  */
-function writeTimelineProps(
-  tempDir: string,
-  timeline: Timeline,
-  assetsPath: string,
-): string {
-  const propsPath = join(tempDir, 'timeline-props.json');
-  const props = {
-    timeline,
-    assetsPath: resolve(assetsPath),
+function serializeTimeline(timeline: Timeline): object {
+  return {
+    ...timeline,
+    slides: timeline.slides.map((slide) => ({
+      ...slide,
+      captions: slide.captions || [],
+    })),
   };
-  writeFileSync(propsPath, JSON.stringify(props, null, 2));
-  return propsPath;
 }
 
 /**
@@ -132,9 +129,10 @@ function cleanup(tempDir: string, bundlePath?: string): void {
 function getEntryPoint(): string {
   // Look for the Remotion entry point relative to this file
   // In production, this would be in the package's remotion directory
+  // Root.tsx is the entry point that calls registerRoot()
   const possiblePaths = [
-    join(dirname(import.meta.url.replace('file://', '')), 'composition.tsx'),
-    join(process.cwd(), 'src', 'renderers', 'remotion', 'composition.tsx'),
+    join(dirname(import.meta.url.replace('file://', '')), 'Root.tsx'),
+    join(process.cwd(), 'src', 'renderers', 'remotion', 'Root.tsx'),
     join(process.cwd(), 'remotion', 'index.tsx'),
   ];
 
@@ -200,8 +198,8 @@ export async function renderVideo(
   let bundlePath: string | undefined;
 
   try {
-    // Write timeline props to temp file
-    const propsPath = writeTimelineProps(tempDir, timeline, assetsPath);
+    // Serialize timeline for Remotion props
+    const serializedTimeline = serializeTimeline(timeline);
 
     // Get the entry point for bundling
     const entryPoint = getEntryPoint();
@@ -213,8 +211,18 @@ export async function renderVideo(
     console.log('Bundling Remotion project...');
     bundlePath = await bundle({
       entryPoint,
-      // Enable caching for faster subsequent renders
-      webpackOverride: (config) => config,
+      // Configure webpack to resolve .js imports to .ts/.tsx files
+      webpackOverride: (config) => {
+        return {
+          ...config,
+          resolve: {
+            ...config.resolve,
+            extensionAlias: {
+              '.js': ['.js', '.ts', '.tsx'],
+            },
+          },
+        };
+      },
     });
 
     opts.onProgress?.(0.1);
@@ -223,14 +231,17 @@ export async function renderVideo(
     const resolution = QUALITY_PRESETS[opts.quality];
     const durationInFrames = Math.ceil(timeline.totalDuration * timeline.fps);
 
+    // The input props for the composition
+    const inputProps = {
+      timeline: serializedTimeline,
+      assetsPath: resolve(assetsPath),
+    };
+
     // Select the composition
     const composition = await selectComposition({
       serveUrl: bundlePath,
       id: 'Presentation',
-      inputProps: {
-        timelinePath: propsPath,
-        assetsPath: resolve(assetsPath),
-      },
+      inputProps,
     });
 
     // Override composition settings with our timeline data
@@ -262,10 +273,7 @@ export async function renderVideo(
       outputLocation: opts.outputPath,
       codec: CODEC_MAP[opts.codec] as any,
       crf: opts.crf,
-      inputProps: {
-        timelinePath: propsPath,
-        assetsPath: resolve(assetsPath),
-      },
+      inputProps,
       onProgress: ({ progress }) => {
         // Scale progress from 0.15 to 1.0
         const scaledProgress = 0.15 + progress * 0.85;
