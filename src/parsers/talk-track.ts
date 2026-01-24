@@ -188,7 +188,9 @@ function parseSlidesTable(content: string, sections: Section[]): SlideDefinition
       errors.push(`Row ${i + 1}: Invalid image path "${image}"`);
     }
 
-    slides.push({ position, slug, title, image, section });
+    // Normalize image path to ensure consistent images/ prefix
+    const normalizedImage = normalizeImagePath(image);
+    slides.push({ position, slug, title, image: normalizedImage, section });
   }
 
   // Check for duplicate slugs
@@ -266,6 +268,40 @@ export function stripSemanticTags(audioText: string): string {
 }
 
 // -----------------------------------------------------------------------------
+// Image Path Normalization
+// -----------------------------------------------------------------------------
+
+/**
+ * Normalizes an image path to ensure consistent `images/` prefix.
+ * Handles various input formats:
+ *   - `slide.png` → `images/slide.png`
+ *   - `images/slide.png` → `images/slide.png` (unchanged)
+ *   - `./images/slide.png` → `images/slide.png`
+ *   - `../assets/slide.png` → `../assets/slide.png` (external paths unchanged)
+ */
+function normalizeImagePath(imagePath: string): string {
+  if (!imagePath) return imagePath;
+
+  // Already has images/ prefix
+  if (imagePath.startsWith('images/')) {
+    return imagePath;
+  }
+
+  // Has ./images/ prefix - normalize
+  if (imagePath.startsWith('./images/')) {
+    return imagePath.slice(2); // Remove './'
+  }
+
+  // External/relative paths (../, /, http://, etc.) - leave unchanged
+  if (imagePath.startsWith('../') || imagePath.startsWith('/') || imagePath.includes('://')) {
+    return imagePath;
+  }
+
+  // Plain filename or other relative path - add images/ prefix
+  return `images/${imagePath}`;
+}
+
+// -----------------------------------------------------------------------------
 // Slide Content Parsing
 // -----------------------------------------------------------------------------
 
@@ -285,16 +321,18 @@ function parseSlideContent(content: string, slides: SlideDefinition[]): Map<stri
     const title = match[2].trim();
     const sectionContent = match[3];
 
-    // Validate slug exists in slides table
+    // Check if slug exists in slides table
+    // If not, silently skip (allows extra content sections like appendix)
     const slideDef = slides.find((s) => s.slug === slug);
     if (!slideDef) {
-      errors.push(`Slide content for unknown slug: "${slug}"`);
+      // Lenient mode: skip content sections not in slides table
       continue;
     }
 
-    // Extract image
+    // Extract image and normalize path to ensure consistent images/ prefix
     const imageMatch = sectionContent.match(/!\[.*?\]\((.*?)\)/);
-    const imagePath = imageMatch ? imageMatch[1] : slideDef.image;
+    const rawImagePath = imageMatch ? imageMatch[1] : slideDef.image;
+    const imagePath = normalizeImagePath(rawImagePath);
 
     // Extract audio block
     const audioMatch = sectionContent.match(/<!-- AUDIO -->\n?([\s\S]*?)\n?<!-- \/AUDIO -->/);
