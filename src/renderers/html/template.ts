@@ -1906,9 +1906,10 @@ function generateScript(
         });
 
         // Annotation color selection
-        document.querySelectorAll('.annotation-color').forEach(el => {
+        const colorSwatches = document.querySelectorAll('.annotation-color');
+        colorSwatches.forEach(el => {
             el.addEventListener('click', () => {
-                document.querySelectorAll('.annotation-color').forEach(c => c.classList.remove('active'));
+                colorSwatches.forEach(c => c.classList.remove('active'));
                 el.classList.add('active');
                 annotationColor = el.dataset.color;
             });
@@ -2153,8 +2154,8 @@ function generateScript(
                 return;
             }
 
-            // Don't capture if blank screen is visible (except B, W, Escape)
-            if (showBlankScreen && !['Escape', 'b', 'B', 'w', 'W'].includes(e.key)) {
+            // Don't capture if blank screen is visible (except b, w, W, Escape)
+            if (showBlankScreen && !['Escape', 'b', 'w', 'W'].includes(e.key)) {
                 return;
             }
 
