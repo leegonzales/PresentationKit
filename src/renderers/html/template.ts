@@ -57,6 +57,8 @@ function generateStyles(options: Required<HtmlOptions>): string {
             --red: #6b4c4c;
             --warning: #FFC107;
             --overtime: #f44336;
+            --pace-on-pace: #4CAF50;
+            --pace-ahead: #2196F3;
         }
 
         * {
@@ -1126,19 +1128,19 @@ function generateStyles(options: Required<HtmlOptions>): string {
         }
 
         .pacing-dot.on-pace {
-            background: #4CAF50;
+            background: var(--pace-on-pace);
         }
 
         .pacing-dot.slightly-behind {
-            background: #FFC107;
+            background: var(--warning);
         }
 
         .pacing-dot.behind {
-            background: #f44336;
+            background: var(--overtime);
         }
 
         .pacing-dot.ahead {
-            background: #2196F3;
+            background: var(--pace-ahead);
         }
 
         .pacing-text {
@@ -1288,6 +1290,13 @@ function generateScript(
             totalAudioDuration: ${metadata.totalAudioDuration},
             hasAudio: ${hasAudio}
         };
+
+        // Utility: Escape HTML to prevent XSS
+        function escapeForHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
         // State
         let currentIndex = 0;
@@ -1736,12 +1745,6 @@ function generateScript(
             // Limit to 10 results
             results = results.slice(0, 10);
 
-            // Escape HTML to prevent XSS
-            const escapeForHtml = (text) => {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            };
 
             jumpResults.innerHTML = results.map((r, i) => \`
                 <div class="jump-result\${i === jumpSelectedIndex ? ' selected' : ''}"
@@ -1987,8 +1990,7 @@ function generateScript(
 
         function updateRehearsalDisplay() {
             if (!showRehearsalStats) return;
-            rehearsalTimes.replaceChildren();
-            slides.forEach((slide, idx) => {
+            const items = slides.map((slide, idx) => {
                 const time = slideTimes[idx] || 0;
                 const item = document.createElement('div');
                 item.className = 'rehearsal-slide-time';
@@ -2002,18 +2004,12 @@ function generateScript(
                 durationSpan.textContent = formatTime(Math.round(time));
 
                 item.append(nameSpan, durationSpan);
-                rehearsalTimes.appendChild(item);
+                return item;
             });
+            rehearsalTimes.replaceChildren(...items);
         }
 
         // === PRESENTER VIEW ===
-        // HTML escape for presenter view content
-        function escapeHtmlForPv(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         let presenterViewBlobUrl = null;
 
         function openPresenterView() {
@@ -2021,7 +2017,7 @@ function generateScript(
                 presenterViewWindow.focus();
                 return;
             }
-            const safeTitle = escapeHtmlForPv(metadata.title);
+            const safeTitle = escapeForHtml(metadata.title);
             const presenterHtml = \`<!DOCTYPE html>
 <html>
 <head>
@@ -2059,8 +2055,12 @@ function generateScript(
         </div>
     </div>
     <script>
+        // Store expected origin for security validation
+        const expectedOrigin = window.opener ? window.opener.origin : null;
         // Listen for update messages from main window
         window.addEventListener('message', function(e) {
+            // Validate origin matches opener
+            if (e.origin !== expectedOrigin) return;
             if (e.data && e.data.type === 'presenterUpdate') {
                 const data = e.data;
                 document.getElementById('pvCurrent').src = data.currentImage;
@@ -2111,8 +2111,9 @@ function generateScript(
                 const nextSlide = slides[currentIndex + 1];
                 // Escape notes then convert newlines to paragraphs
                 const safeNotes = slide.notes
-                    ? '<p>' + escapeHtmlForPv(slide.notes).replace(/\\n/g, '</p><p>') + '</p>'
+                    ? '<p>' + escapeForHtml(slide.notes).replace(/\\n/g, '</p><p>') + '</p>'
                     : null;
+                // Use '*' because Blob URLs have null origin; security validated by popup
                 presenterViewWindow.postMessage({
                     type: 'presenterUpdate',
                     currentImage: slide.image,
