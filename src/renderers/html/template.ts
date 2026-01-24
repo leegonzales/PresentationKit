@@ -1514,9 +1514,12 @@ function generateScript(
             clockEl.textContent = hours + ':' + mins;
         }
 
-        // Start clock
-        setInterval(updateClock, 1000);
-        updateClock();
+        // Start clock - update only when minute changes for efficiency
+        (function runClock() {
+            updateClock();
+            const msToNextMinute = 60000 - (Date.now() % 60000);
+            setTimeout(runClock, msToNextMinute);
+        })();
 
         // Print presentation
         function printPresentation() {
