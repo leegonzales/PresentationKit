@@ -57,6 +57,8 @@ function generateStyles(options: Required<HtmlOptions>): string {
             --red: #6b4c4c;
             --warning: #FFC107;
             --overtime: #f44336;
+            --pace-on-pace: #4CAF50;
+            --pace-ahead: #2196F3;
         }
 
         * {
@@ -959,6 +961,270 @@ function generateStyles(options: Required<HtmlOptions>): string {
         .presentation.filmstrip-open .control-bar {
             border-top: none;
         }
+
+        /* Blank Screen Overlay */
+        .blank-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .blank-screen.visible {
+            display: flex;
+        }
+
+        .blank-screen.black {
+            background: #000;
+        }
+
+        .blank-screen.white {
+            background: #fff;
+        }
+
+        .blank-screen-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            opacity: 0.3;
+        }
+
+        .blank-screen.black .blank-screen-hint {
+            color: #fff;
+        }
+
+        .blank-screen.white .blank-screen-hint {
+            color: #000;
+        }
+
+        /* Laser Pointer */
+        .laser-pointer {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #ff0000 0%, #ff0000 40%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1500;
+            display: none;
+            box-shadow: 0 0 20px 8px rgba(255, 0, 0, 0.4);
+            transform: translate(-50%, -50%);
+        }
+
+        .laser-pointer.visible {
+            display: block;
+        }
+
+        /* Annotation Canvas */
+        .annotation-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1400;
+            display: none;
+            cursor: crosshair;
+        }
+
+        .annotation-canvas.visible {
+            display: block;
+        }
+
+        .annotation-toolbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--control-bg);
+            border: 1px solid var(--control-border);
+            border-radius: 8px;
+            padding: 10px 15px;
+            display: none;
+            gap: 10px;
+            align-items: center;
+            z-index: 1450;
+        }
+
+        .annotation-toolbar.visible {
+            display: flex;
+        }
+
+        .annotation-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .annotation-color:hover {
+            transform: scale(1.1);
+        }
+
+        .annotation-color.active {
+            border-color: white;
+        }
+
+        .annotation-size {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+        }
+
+        .annotation-size input {
+            width: 60px;
+        }
+
+        .annotation-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .annotation-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Pacing Guide */
+        .pacing-indicator {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 200;
+        }
+
+        .pacing-indicator.visible {
+            display: flex;
+        }
+
+        .pacing-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .pacing-dot.on-pace {
+            background: var(--pace-on-pace);
+        }
+
+        .pacing-dot.slightly-behind {
+            background: var(--warning);
+        }
+
+        .pacing-dot.behind {
+            background: var(--overtime);
+        }
+
+        .pacing-dot.ahead {
+            background: var(--pace-ahead);
+        }
+
+        .pacing-text {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Rehearsal Mode Stats */
+        .rehearsal-stats {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: var(--control-bg);
+            border: 1px solid var(--control-border);
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+            z-index: 600;
+            min-width: 200px;
+        }
+
+        .rehearsal-stats.visible {
+            display: block;
+        }
+
+        .rehearsal-stats h4 {
+            color: var(--primary);
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .rehearsal-slide-times {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .rehearsal-slide-time {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rehearsal-slide-time:last-child {
+            border-bottom: none;
+        }
+
+        .rehearsal-slide-name {
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .rehearsal-slide-duration {
+            color: var(--primary);
+            font-family: 'SF Mono', monospace;
+        }
+
+        /* Presenter View (opens in new window) */
+        .presenter-view-btn {
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.6);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .presenter-view-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Video Slide Support */
+        .slide-video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 6px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
     `;
 }
 
@@ -1025,6 +1291,13 @@ function generateScript(
             hasAudio: ${hasAudio}
         };
 
+        // Utility: Escape HTML to prevent XSS
+        function escapeForHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // State
         let currentIndex = 0;
         let showNotes = false;
@@ -1036,6 +1309,19 @@ function generateScript(
         let showSectionPanel = false;
         let showJumpDialog = false;
         let jumpSelectedIndex = 0;
+        let showBlankScreen = false;
+        let blankScreenColor = 'black';
+        let showLaser = false;
+        let showAnnotation = false;
+        let annotationColor = '#ff0000';
+        let annotationSize = 4;
+        let isDrawing = false;
+        let showPacing = true;
+        let showRehearsalStats = false;
+        let slideStartTime = 0;
+        let slideTimes = [];
+        let timedSlideIndex = 0;
+        let presenterViewWindow = null;
         let presentationRunning = false;
         let autoAdvance = true;
         let timerInterval = null;
@@ -1068,6 +1354,17 @@ function generateScript(
         const jumpInput = document.getElementById('jumpInput');
         const jumpResults = document.getElementById('jumpResults');
         const clockEl = document.getElementById('clock');
+        const blankScreen = document.getElementById('blankScreen');
+        const laserPointer = document.getElementById('laserPointer');
+        const annotationCanvas = document.getElementById('annotationCanvas');
+        const annotationToolbar = document.getElementById('annotationToolbar');
+        const annotationSizeInput = document.getElementById('annotationSize');
+        const pacingIndicator = document.getElementById('pacingIndicator');
+        const pacingDot = document.getElementById('pacingDot');
+        const pacingText = document.getElementById('pacingText');
+        const rehearsalStats = document.getElementById('rehearsalStats');
+        const rehearsalTimes = document.getElementById('rehearsalTimes');
+        const ctx = annotationCanvas.getContext('2d');
         const presentation = document.querySelector('.presentation');
 
         // Calculate target time from audio or metadata
@@ -1101,6 +1398,10 @@ function generateScript(
                     timerEl.classList.add('running');
                 }
             }
+
+            // Update pacing and presenter view
+            updatePacing();
+            updatePresenterView();
         }
 
         // Update slide display
@@ -1159,6 +1460,11 @@ function generateScript(
                 scrollFilmstripToCurrentSlide();
             }
             if (showSectionPanel) updateSectionPanelSelection();
+
+            // Record time for rehearsal mode
+            recordSlideTime();
+            updateRehearsalDisplay();
+            updatePresenterView();
         }
 
         // Navigate to next slide
@@ -1264,6 +1570,8 @@ function generateScript(
 
         // Stop presentation
         function stopPresentation() {
+            // Record time for the last slide before stopping
+            recordSlideTime();
             presentationRunning = false;
             startBtn.textContent = 'Start';
             startBtn.classList.remove('running');
@@ -1437,12 +1745,6 @@ function generateScript(
             // Limit to 10 results
             results = results.slice(0, 10);
 
-            // Escape HTML to prevent XSS
-            const escapeForHtml = (text) => {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            };
 
             jumpResults.innerHTML = results.map((r, i) => \`
                 <div class="jump-result\${i === jumpSelectedIndex ? ' selected' : ''}"
@@ -1525,6 +1827,308 @@ function generateScript(
             window.print();
         }
 
+        // === BLANK SCREEN ===
+        function toggleBlankScreen(color) {
+            if (showBlankScreen && blankScreenColor === color) {
+                hideBlankScreen();
+            } else {
+                showBlankScreenOverlay(color);
+            }
+        }
+
+        function showBlankScreenOverlay(color) {
+            showBlankScreen = true;
+            blankScreenColor = color;
+            blankScreen.classList.remove('black', 'white');
+            blankScreen.classList.add(color, 'visible');
+        }
+
+        function hideBlankScreen() {
+            showBlankScreen = false;
+            blankScreen.classList.remove('visible');
+        }
+
+        blankScreen.addEventListener('click', hideBlankScreen);
+
+        // === LASER POINTER ===
+        function toggleLaser() {
+            showLaser = !showLaser;
+            laserPointer.classList.toggle('visible', showLaser);
+            if (showAnnotation && showLaser) {
+                toggleAnnotation(); // Can't have both
+            }
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (showLaser) {
+                laserPointer.style.left = e.clientX + 'px';
+                laserPointer.style.top = e.clientY + 'px';
+            }
+        });
+
+        // === ANNOTATION MODE ===
+        function toggleAnnotation() {
+            showAnnotation = !showAnnotation;
+            annotationCanvas.classList.toggle('visible', showAnnotation);
+            annotationToolbar.classList.toggle('visible', showAnnotation);
+            if (showAnnotation) {
+                resizeCanvas();
+                if (showLaser) toggleLaser(); // Can't have both
+            }
+        }
+
+        function resizeCanvas() {
+            annotationCanvas.width = window.innerWidth;
+            annotationCanvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', () => {
+            if (showAnnotation) resizeCanvas();
+        });
+
+        // Annotation drawing
+        annotationCanvas.addEventListener('mousedown', (e) => {
+            if (!showAnnotation) return;
+            isDrawing = true;
+            ctx.strokeStyle = annotationColor;
+            ctx.lineWidth = annotationSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(e.clientX, e.clientY);
+        });
+
+        annotationCanvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing || !showAnnotation) return;
+            ctx.lineTo(e.clientX, e.clientY);
+            ctx.stroke();
+        });
+
+        annotationCanvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        annotationCanvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
+        // Annotation color selection
+        const colorSwatches = document.querySelectorAll('.annotation-color');
+        colorSwatches.forEach(el => {
+            el.addEventListener('click', () => {
+                colorSwatches.forEach(c => c.classList.remove('active'));
+                el.classList.add('active');
+                annotationColor = el.dataset.color;
+            });
+        });
+
+        annotationSizeInput.addEventListener('input', (e) => {
+            annotationSize = parseInt(e.target.value);
+        });
+
+        document.getElementById('annotationClear').addEventListener('click', () => {
+            ctx.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+        });
+
+        document.getElementById('annotationClose').addEventListener('click', toggleAnnotation);
+
+        // === PACING GUIDE ===
+        function updatePacing() {
+            if (!presentationRunning || !showPacing) {
+                pacingIndicator.classList.remove('visible');
+                return;
+            }
+
+            pacingIndicator.classList.add('visible');
+
+            // Calculate expected position based on time
+            const progress = elapsedSeconds / targetSeconds;
+            const expectedSlide = Math.floor(progress * slides.length);
+            const diff = currentIndex - expectedSlide;
+
+            pacingDot.classList.remove('on-pace', 'slightly-behind', 'behind', 'ahead');
+
+            if (diff >= 1) {
+                pacingDot.classList.add('ahead');
+                pacingText.textContent = 'Ahead by ' + diff + ' slide' + (diff > 1 ? 's' : '');
+            } else if (diff <= -2) {
+                pacingDot.classList.add('behind');
+                pacingText.textContent = 'Behind by ' + Math.abs(diff) + ' slides';
+            } else if (diff === -1) {
+                pacingDot.classList.add('slightly-behind');
+                pacingText.textContent = 'Slightly behind';
+            } else {
+                pacingDot.classList.add('on-pace');
+                pacingText.textContent = 'On pace';
+            }
+        }
+
+        function togglePacing() {
+            showPacing = !showPacing;
+            updatePacing();
+        }
+
+        // === REHEARSAL MODE ===
+        function toggleRehearsalStats() {
+            showRehearsalStats = !showRehearsalStats;
+            rehearsalStats.classList.toggle('visible', showRehearsalStats);
+            if (showRehearsalStats) {
+                updateRehearsalDisplay();
+            }
+        }
+
+        function recordSlideTime() {
+            if (!presentationRunning) return;
+            const now = Date.now();
+            if (slideStartTime > 0) {
+                const duration = (now - slideStartTime) / 1000;
+                slideTimes[timedSlideIndex] = (slideTimes[timedSlideIndex] || 0) + duration;
+            }
+            slideStartTime = now;
+            timedSlideIndex = currentIndex;
+        }
+
+        function updateRehearsalDisplay() {
+            if (!showRehearsalStats) return;
+            const items = slides.map((slide, idx) => {
+                const time = slideTimes[idx] || 0;
+                const item = document.createElement('div');
+                item.className = 'rehearsal-slide-time';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'rehearsal-slide-name';
+                nameSpan.textContent = (idx + 1) + '. ' + slide.title;
+
+                const durationSpan = document.createElement('span');
+                durationSpan.className = 'rehearsal-slide-duration';
+                durationSpan.textContent = formatTime(Math.round(time));
+
+                item.append(nameSpan, durationSpan);
+                return item;
+            });
+            rehearsalTimes.replaceChildren(...items);
+        }
+
+        // === PRESENTER VIEW ===
+        let presenterViewBlobUrl = null;
+
+        function openPresenterView() {
+            if (presenterViewWindow && !presenterViewWindow.closed) {
+                presenterViewWindow.focus();
+                return;
+            }
+            const safeTitle = escapeForHtml(metadata.title);
+            const presenterHtml = \`<!DOCTYPE html>
+<html>
+<head>
+    <title>Presenter View - \${safeTitle}</title>
+    <style>
+        body { font-family: system-ui; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        .pv-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; height: calc(100vh - 40px); }
+        .pv-current { background: #222; border-radius: 8px; padding: 15px; }
+        .pv-current img { width: 100%; border-radius: 4px; }
+        .pv-sidebar { display: flex; flex-direction: column; gap: 15px; }
+        .pv-next { background: #222; border-radius: 8px; padding: 15px; flex: 1; }
+        .pv-next img { width: 100%; border-radius: 4px; opacity: 0.7; }
+        .pv-notes { background: #222; border-radius: 8px; padding: 15px; flex: 2; overflow-y: auto; }
+        .pv-timer { font-size: 48px; font-family: monospace; color: #557373; text-align: center; padding: 20px; }
+        h3 { color: #557373; margin: 0 0 10px; font-size: 12px; text-transform: uppercase; }
+        .pv-notes p { line-height: 1.6; color: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="pv-container">
+        <div class="pv-current">
+            <h3>Current Slide</h3>
+            <img id="pvCurrent" src="">
+            <div class="pv-timer" id="pvTimer">00:00</div>
+        </div>
+        <div class="pv-sidebar">
+            <div class="pv-next">
+                <h3>Next Slide</h3>
+                <img id="pvNext" src="">
+            </div>
+            <div class="pv-notes">
+                <h3>Speaker Notes</h3>
+                <div id="pvNotes"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Store expected origin for security validation
+        const expectedOrigin = window.opener ? window.opener.origin : null;
+        // Listen for update messages from main window
+        window.addEventListener('message', function(e) {
+            // Validate origin matches opener
+            if (e.origin !== expectedOrigin) return;
+            if (e.data && e.data.type === 'presenterUpdate') {
+                const data = e.data;
+                document.getElementById('pvCurrent').src = data.currentImage;
+                document.getElementById('pvNext').src = data.nextImage || '';
+                document.getElementById('pvNotes').innerHTML = data.notes || '<p style="color:#666">No notes</p>';
+                document.getElementById('pvTimer').textContent = data.timer;
+                document.getElementById('pvTimer').style.color = data.timerColor;
+            }
+        });
+        // Notify main window we're ready
+        if (window.opener) {
+            window.opener.postMessage({ type: 'presenterReady' }, '*');
+        }
+    </script>
+</body>
+</html>\`;
+            // Create Blob URL instead of using document.write
+            const blob = new Blob([presenterHtml], { type: 'text/html' });
+            presenterViewBlobUrl = URL.createObjectURL(blob);
+            presenterViewWindow = window.open(presenterViewBlobUrl, 'PresenterView', 'width=800,height=600');
+            if (!presenterViewWindow) {
+                URL.revokeObjectURL(presenterViewBlobUrl);
+                presenterViewBlobUrl = null;
+                alert('Presenter view blocked. Please allow popups for this site.');
+                return;
+            }
+        }
+
+        // Listen for presenter view ready message
+        window.addEventListener('message', function(e) {
+            if (e.source === presenterViewWindow && e.data && e.data.type === 'presenterReady') {
+                updatePresenterView();
+            }
+        });
+
+        // Clean up Blob URL when presenter view is closed
+        function cleanupPresenterView() {
+            if (presenterViewBlobUrl) {
+                URL.revokeObjectURL(presenterViewBlobUrl);
+                presenterViewBlobUrl = null;
+            }
+            presenterViewWindow = null;
+        }
+
+        function updatePresenterView() {
+            if (presenterViewWindow && !presenterViewWindow.closed) {
+                const slide = slides[currentIndex];
+                const nextSlide = slides[currentIndex + 1];
+                // Escape notes then convert newlines to paragraphs
+                const safeNotes = slide.notes
+                    ? '<p>' + escapeForHtml(slide.notes).replace(/\\n/g, '</p><p>') + '</p>'
+                    : null;
+                // Use '*' because Blob URLs have null origin; security validated by popup
+                presenterViewWindow.postMessage({
+                    type: 'presenterUpdate',
+                    currentImage: slide.image,
+                    nextImage: nextSlide ? nextSlide.image : null,
+                    notes: safeNotes,
+                    timer: formatTime(elapsedSeconds),
+                    timerColor: elapsedSeconds > targetSeconds ? '#f44336' :
+                               elapsedSeconds > targetSeconds * 0.9 ? '#FFC107' : '#557373'
+                }, '*');
+            } else if (presenterViewWindow === null && presenterViewBlobUrl) {
+                // Window was closed, clean up
+                cleanupPresenterView();
+            }
+        }
+
         // Audio ended handler
         audioPlayer.addEventListener('ended', () => {
             audioIndicator.classList.remove('active');
@@ -1582,26 +2186,32 @@ function generateScript(
             }
 
             // Don't capture if help is visible
-            if (showHelp && e.key !== 'Escape' && e.key !== 'h' && e.key !== 'H' && e.key !== '?') {
+            if (showHelp && !['Escape', 'h', 'H', '?'].includes(e.key)) {
                 return;
             }
 
             // Don't capture if grid is visible (except Escape and G)
-            if (showGrid && e.key !== 'Escape' && e.key !== 'g' && e.key !== 'G') {
+            if (showGrid && !['Escape', 'g', 'G'].includes(e.key)) {
+                return;
+            }
+
+            // Don't capture if blank screen is visible (except b, w, W, Escape)
+            if (showBlankScreen && !['Escape', 'b', 'w', 'W'].includes(e.key)) {
+                return;
+            }
+
+            // Don't capture if annotation mode (except A and Escape)
+            if (showAnnotation && !['Escape', 'a', 'A'].includes(e.key)) {
                 return;
             }
 
             switch (e.key) {
                 case 'ArrowRight':
                 case 'PageDown':
-                case 'l':
-                case 'L':
                     nextSlide();
                     break;
                 case 'ArrowLeft':
                 case 'PageUp':
-                case 'j':
-                case 'J':
                     prevSlide();
                     break;
                 case ' ':
@@ -1644,7 +2254,11 @@ function generateScript(
                     toggleHelp();
                     break;
                 case 'Escape':
-                    if (showJumpDialog) {
+                    if (showBlankScreen) {
+                        hideBlankScreen();
+                    } else if (showAnnotation) {
+                        toggleAnnotation();
+                    } else if (showJumpDialog) {
                         toggleJumpDialog();
                     } else if (showGrid) {
                         toggleGrid();
@@ -1668,8 +2282,8 @@ function generateScript(
                 case 'D':
                     toggleDrawer();
                     break;
-                case 'b':
-                case 'B':
+                case 'v':
+                case 'V':
                     toggleFilmstrip();
                     break;
                 case 's':
@@ -1679,6 +2293,34 @@ function generateScript(
                 case '/':
                     e.preventDefault();
                     toggleJumpDialog();
+                    break;
+                case 'b':
+                    toggleBlankScreen('black');
+                    break;
+                case 'w':
+                case 'W':
+                    toggleBlankScreen('white');
+                    break;
+                case 'l':
+                case 'L':
+                    toggleLaser();
+                    break;
+                case 'a':
+                case 'A':
+                    toggleAnnotation();
+                    break;
+                case 'o':
+                case 'O':
+                    openPresenterView();
+                    break;
+                case 'c':
+                case 'C':
+                    togglePacing();
+                    break;
+                case 'B':
+                    if (e.shiftKey) {
+                        toggleRehearsalStats();
+                    }
                     break;
                 case 'f':
                 case 'F':
@@ -1747,9 +2389,22 @@ function generateHelpOverlay(): string {
                 <div class="help-grid">
                     <kbd>G</kbd> <span>Grid overview (all slides)</span>
                     <kbd>D</kbd> <span>Talk track drawer</span>
-                    <kbd>B</kbd> <span>Thumbnail filmstrip</span>
+                    <kbd>V</kbd> <span>Thumbnail filmstrip</span>
                     <kbd>S</kbd> <span>Section navigation</span>
                     <kbd>/</kbd> <span>Quick jump to slide</span>
+                    <kbd>O</kbd> <span>Open presenter view</span>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>Presentation Tools</h3>
+                <div class="help-grid">
+                    <kbd>b</kbd> <span>Blank screen (black)</span>
+                    <kbd>W</kbd> <span>Blank screen (white)</span>
+                    <kbd>L</kbd> <span>Laser pointer</span>
+                    <kbd>A</kbd> <span>Annotation mode (draw)</span>
+                    <kbd>C</kbd> <span>Toggle pacing guide</span>
+                    <kbd>Shift+B</kbd> <span>Rehearsal stats</span>
                 </div>
             </div>
 
@@ -1984,6 +2639,42 @@ export function generateHtmlPresentation(
     ${generateSectionPanel(sections)}
 
     ${generateJumpDialog()}
+
+    <!-- Blank Screen Overlay -->
+    <div class="blank-screen" id="blankScreen">
+        <span class="blank-screen-hint">Press B/W or click to exit</span>
+    </div>
+
+    <!-- Laser Pointer -->
+    <div class="laser-pointer" id="laserPointer"></div>
+
+    <!-- Annotation Canvas -->
+    <canvas class="annotation-canvas" id="annotationCanvas">Your browser does not support the canvas element for annotations.</canvas>
+    <div class="annotation-toolbar" id="annotationToolbar">
+        <div class="annotation-color active" style="background: #ff0000" data-color="#ff0000"></div>
+        <div class="annotation-color" style="background: #00ff00" data-color="#00ff00"></div>
+        <div class="annotation-color" style="background: #0088ff" data-color="#0088ff"></div>
+        <div class="annotation-color" style="background: #ffff00" data-color="#ffff00"></div>
+        <div class="annotation-color" style="background: #ffffff" data-color="#ffffff"></div>
+        <div class="annotation-size">
+            <label for="annotationSize">Size:</label>
+            <input type="range" id="annotationSize" min="2" max="20" value="4">
+        </div>
+        <button class="annotation-btn" id="annotationClear">Clear</button>
+        <button class="annotation-btn" id="annotationClose">Close (A)</button>
+    </div>
+
+    <!-- Pacing Indicator -->
+    <div class="pacing-indicator" id="pacingIndicator">
+        <span class="pacing-dot" id="pacingDot"></span>
+        <span class="pacing-text" id="pacingText">On pace</span>
+    </div>
+
+    <!-- Rehearsal Stats -->
+    <div class="rehearsal-stats" id="rehearsalStats">
+        <h4>Rehearsal Times</h4>
+        <div class="rehearsal-slide-times" id="rehearsalTimes"></div>
+    </div>
 
     <audio id="audioPlayer" preload="auto"></audio>
 
