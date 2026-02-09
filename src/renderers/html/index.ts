@@ -85,6 +85,11 @@ function prepareSlides(
 ): PreparedHtmlSlide[] {
   const slides: PreparedHtmlSlide[] = [];
 
+  // Resolve theme suffix once before the loop
+  const themeSuffix = options.theme
+    ? (resolveTheme(options.theme)?.imageSuffix || '')
+    : '';
+
   for (const slideDef of talkTrack.slides) {
     const content = talkTrack.slideContent.get(slideDef.slug);
 
@@ -127,9 +132,7 @@ function prepareSlides(
       position: slideDef.position,
       slug: slideDef.slug,
       title: slideDef.title,
-      imagePath: options.theme
-        ? options.imageBasePath + applyImageSuffix(slideDef.image, resolveTheme(options.theme)?.imageSuffix || '')
-        : options.imageBasePath + slideDef.image,
+      imagePath: options.imageBasePath + applyImageSuffix(slideDef.image, themeSuffix),
       section: getSectionName(slideDef.section, talkTrack.sections),
       sectionColor,
       audioPath: audioPath ? options.audioBasePath + audioPath.split('/').pop() : null,
@@ -256,18 +259,12 @@ function mergeOptions(
 
   return {
     ...DEFAULT_HTML_OPTIONS,
-    // Apply branding defaults from TalkTrack
-    primaryColor: branding.primary ?? DEFAULT_HTML_OPTIONS.primaryColor,
-    backgroundColor: branding.background ?? DEFAULT_HTML_OPTIONS.backgroundColor,
-    textColor: branding.text ?? DEFAULT_HTML_OPTIONS.textColor,
+    // Color precedence: user options > branding > theme > defaults
+    primaryColor: options?.primaryColor ?? branding.primary ?? theme?.primaryColor ?? DEFAULT_HTML_OPTIONS.primaryColor,
+    backgroundColor: options?.backgroundColor ?? branding.background ?? theme?.backgroundColor ?? DEFAULT_HTML_OPTIONS.backgroundColor,
+    textColor: options?.textColor ?? branding.text ?? theme?.textColor ?? DEFAULT_HTML_OPTIONS.textColor,
     targetMinutes: talkTrack.targetMinutes,
-    // Apply theme color overrides (theme colors fill in when branding is absent)
-    ...(theme && !branding.primary ? { primaryColor: theme.primaryColor } : {}),
-    ...(theme && !branding.background ? { backgroundColor: theme.backgroundColor } : {}),
-    ...(theme && !branding.text ? { textColor: theme.textColor } : {}),
-    // Store theme name
     theme: themeName,
-    // Override with user options (highest priority)
     ...options,
   };
 }

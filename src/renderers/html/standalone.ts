@@ -44,6 +44,10 @@ export interface VoiceConfig {
 export interface StandaloneHtmlOptions {
   /** Primary brand color for UI elements (hex) */
   primaryColor?: string;
+  /** Background color for the presentation (hex) */
+  backgroundColor?: string;
+  /** Text color for the presentation (hex) */
+  textColor?: string;
   /** MP3 bitrate for audio compression (default: "64k") */
   mp3Bitrate?: string;
   /** Whether to show auto-advance button (default: true) */
@@ -61,6 +65,8 @@ export interface StandaloneHtmlOptions {
  */
 const DEFAULT_OPTIONS: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voices'>> = {
   primaryColor: '#557373',
+  backgroundColor: '#0d0d0d',
+  textColor: '#ffffff',
   mp3Bitrate: '64k',
   enableAutoAdvance: true,
   theme: '',
@@ -336,7 +342,7 @@ function generateStandaloneHtml(
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: ${options.primaryColor};
-            --bg: #0d0d0d;
+            --bg: ${options.backgroundColor};
             --bg-light: #F2EFEA;
             --notes-width: 350px;
         }
@@ -1037,6 +1043,8 @@ export async function renderStandaloneHtml(
   // Apply theme colors if not explicitly overridden
   if (theme) {
     if (!options?.primaryColor) opts.primaryColor = theme.primaryColor;
+    if (!options?.backgroundColor) opts.backgroundColor = theme.backgroundColor;
+    if (!options?.textColor) opts.textColor = theme.textColor;
   }
 
   // Output directory is where audio files are located (from timeline generation)

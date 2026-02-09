@@ -131,6 +131,7 @@ async function htmlAction(
     // Generate HTML based on mode
     let outputPath: string;
     let fileSizeMb: number | undefined;
+    const themeSuffix = options.theme ? `-${options.theme}` : '';
 
     if (options.standalone) {
       // Standalone mode: embed all assets as base64
@@ -153,7 +154,7 @@ async function htmlAction(
       const result = await renderStandaloneHtml(
         talkTrack,
         timeline,
-        join(outputDir, options.theme ? `presentation-standalone-${options.theme}.html` : 'presentation-standalone.html'),
+        join(outputDir, `presentation-standalone${themeSuffix}.html`),
         sourceDir,
         {
           mp3Bitrate: options.mp3Bitrate || '64k',
@@ -172,7 +173,7 @@ async function htmlAction(
       // Standard mode: external assets
       spinner.start('Generating HTML presentation...');
 
-      outputPath = join(outputDir, options.theme ? `presentation-${options.theme}.html` : 'presentation.html');
+      outputPath = join(outputDir, `presentation${themeSuffix}.html`);
       await renderHtmlPresentation(talkTrack, timeline, outputPath, {
         primaryColor: talkTrack.branding?.primary,
         theme: options.theme,
