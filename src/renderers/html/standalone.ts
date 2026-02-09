@@ -26,6 +26,7 @@ import type { TalkTrackV5, Section } from '../../parsers/types.js';
 import type { Timeline, TimelineSlide } from '../../generators/timeline/types.js';
 import { stripSemanticTags, getSectionColor, getSectionName, escapeHtml, escapeJs } from './utils.js';
 import { resolveImagePath } from '../../utils/asset-copier.js';
+import { resolveTheme, applyImageSuffix } from '../../themes/index.js';
 
 /**
  * Voice configuration for multi-voice support.
@@ -47,6 +48,8 @@ export interface StandaloneHtmlOptions {
   mp3Bitrate?: string;
   /** Whether to show auto-advance button (default: true) */
   enableAutoAdvance?: boolean;
+  /** Theme name for image variants and color presets */
+  theme?: string;
   /** Callback for progress updates */
   onProgress?: (message: string, progress: number) => void;
   /** Multi-voice configuration (if provided, enables voice toggle) */
@@ -60,6 +63,7 @@ const DEFAULT_OPTIONS: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voic
   primaryColor: '#557373',
   mp3Bitrate: '64k',
   enableAutoAdvance: true,
+  theme: '',
 };
 
 /**
@@ -181,6 +185,7 @@ async function prepareSlides(
   options: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voices'>>,
   voices?: VoiceConfig[],
   onProgress?: (message: string, progress: number) => void,
+  themeSuffix?: string,
 ): Promise<PreparedStandaloneSlide[]> {
   const slides: PreparedStandaloneSlide[] = [];
   const totalSlides = talkTrack.slides.length;
@@ -206,16 +211,28 @@ async function prepareSlides(
       notes = notes ? `${notes}\n\n${content.speakerNotes}` : content.speakerNotes;
     }
 
-    // Resolve and embed image
+    // Resolve and embed image (with theme suffix fallback)
     let imageDataUri = '';
     const imagePath = content?.imagePath || slideDef.image;
     if (imagePath) {
-      const fullImagePath = resolveImagePath(imagePath, sourceDir);
+      let resolvedImagePath = imagePath;
+      let fullImagePath = resolveImagePath(imagePath, sourceDir);
+
+      // If theme is active, try themed image first
+      if (themeSuffix) {
+        const themedPath = applyImageSuffix(imagePath, themeSuffix);
+        const themedFullPath = resolveImagePath(themedPath, sourceDir);
+        if (await fileExists(themedFullPath)) {
+          resolvedImagePath = themedPath;
+          fullImagePath = themedFullPath;
+        }
+      }
+
       const { mime, data } = await imageToBase64(fullImagePath);
       if (data) {
         imageDataUri = `data:${mime};base64,${data}`;
         const sizeKb = Math.round(data.length * 0.75 / 1024);
-        console.log(`  [IMG] ${basename(imagePath)} (${sizeKb}KB)`);
+        console.log(`  [IMG] ${basename(resolvedImagePath)} (${sizeKb}KB)`);
       } else {
         console.warn(`  [WARN] Missing image: ${imagePath}`);
       }
@@ -1013,6 +1030,15 @@ export async function renderStandaloneHtml(
   const { voices, onProgress, ...restOptions } = options || {};
   const opts = { ...DEFAULT_OPTIONS, ...restOptions };
 
+  // Resolve theme for image suffix
+  const theme = opts.theme ? resolveTheme(opts.theme) : undefined;
+  const themeSuffix = theme?.imageSuffix || '';
+
+  // Apply theme colors if not explicitly overridden
+  if (theme) {
+    if (!options?.primaryColor) opts.primaryColor = theme.primaryColor;
+  }
+
   // Output directory is where audio files are located (from timeline generation)
   const outputDir = dirname(outputPath);
 
@@ -1034,6 +1060,7 @@ export async function renderStandaloneHtml(
     opts,
     voices,
     onProgress,
+    themeSuffix,
   );
 
   // Generate HTML

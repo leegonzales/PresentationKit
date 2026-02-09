@@ -42,6 +42,8 @@ export interface BrandConfig {
   background?: string;
   /** Text color (hex) */
   text?: string;
+  /** Image theme name for themed image variants */
+  imageTheme?: string;
 }
 
 /**

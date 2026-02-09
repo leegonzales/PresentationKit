@@ -52,6 +52,7 @@ import {
   getSectionName,
   formatDate,
 } from './utils.js';
+import { resolveTheme, applyImageSuffix } from '../../themes/index.js';
 
 // Re-export types for convenience
 export type {
@@ -126,7 +127,9 @@ function prepareSlides(
       position: slideDef.position,
       slug: slideDef.slug,
       title: slideDef.title,
-      imagePath: options.imageBasePath + slideDef.image,
+      imagePath: options.theme
+        ? options.imageBasePath + applyImageSuffix(slideDef.image, resolveTheme(options.theme)?.imageSuffix || '')
+        : options.imageBasePath + slideDef.image,
       section: getSectionName(slideDef.section, talkTrack.sections),
       sectionColor,
       audioPath: audioPath ? options.audioBasePath + audioPath.split('/').pop() : null,
@@ -247,6 +250,10 @@ function mergeOptions(
 ): Required<HtmlOptions> {
   const branding = talkTrack.branding ?? {};
 
+  // Resolve theme if specified (CLI option or branding config)
+  const themeName = options?.theme || branding.imageTheme || '';
+  const theme = themeName ? resolveTheme(themeName) : undefined;
+
   return {
     ...DEFAULT_HTML_OPTIONS,
     // Apply branding defaults from TalkTrack
@@ -254,7 +261,13 @@ function mergeOptions(
     backgroundColor: branding.background ?? DEFAULT_HTML_OPTIONS.backgroundColor,
     textColor: branding.text ?? DEFAULT_HTML_OPTIONS.textColor,
     targetMinutes: talkTrack.targetMinutes,
-    // Override with user options
+    // Apply theme color overrides (theme colors fill in when branding is absent)
+    ...(theme && !branding.primary ? { primaryColor: theme.primaryColor } : {}),
+    ...(theme && !branding.background ? { backgroundColor: theme.backgroundColor } : {}),
+    ...(theme && !branding.text ? { textColor: theme.textColor } : {}),
+    // Store theme name
+    theme: themeName,
+    // Override with user options (highest priority)
     ...options,
   };
 }
