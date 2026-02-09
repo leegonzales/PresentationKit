@@ -26,6 +26,7 @@ import type { TalkTrackV5, Section } from '../../parsers/types.js';
 import type { Timeline, TimelineSlide } from '../../generators/timeline/types.js';
 import { stripSemanticTags, getSectionColor, getSectionName, escapeHtml, escapeJs } from './utils.js';
 import { resolveImagePath } from '../../utils/asset-copier.js';
+import { resolveTheme, applyImageSuffix } from '../../themes/index.js';
 
 /**
  * Voice configuration for multi-voice support.
@@ -43,10 +44,16 @@ export interface VoiceConfig {
 export interface StandaloneHtmlOptions {
   /** Primary brand color for UI elements (hex) */
   primaryColor?: string;
+  /** Background color for the presentation (hex) */
+  backgroundColor?: string;
+  /** Text color for the presentation (hex) */
+  textColor?: string;
   /** MP3 bitrate for audio compression (default: "64k") */
   mp3Bitrate?: string;
   /** Whether to show auto-advance button (default: true) */
   enableAutoAdvance?: boolean;
+  /** Theme name for image variants and color presets */
+  theme?: string;
   /** Callback for progress updates */
   onProgress?: (message: string, progress: number) => void;
   /** Multi-voice configuration (if provided, enables voice toggle) */
@@ -58,8 +65,11 @@ export interface StandaloneHtmlOptions {
  */
 const DEFAULT_OPTIONS: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voices'>> = {
   primaryColor: '#557373',
+  backgroundColor: '#0d0d0d',
+  textColor: '#ffffff',
   mp3Bitrate: '64k',
   enableAutoAdvance: true,
+  theme: '',
 };
 
 /**
@@ -181,6 +191,7 @@ async function prepareSlides(
   options: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voices'>>,
   voices?: VoiceConfig[],
   onProgress?: (message: string, progress: number) => void,
+  themeSuffix?: string,
 ): Promise<PreparedStandaloneSlide[]> {
   const slides: PreparedStandaloneSlide[] = [];
   const totalSlides = talkTrack.slides.length;
@@ -206,16 +217,28 @@ async function prepareSlides(
       notes = notes ? `${notes}\n\n${content.speakerNotes}` : content.speakerNotes;
     }
 
-    // Resolve and embed image
+    // Resolve and embed image (with theme suffix fallback)
     let imageDataUri = '';
     const imagePath = content?.imagePath || slideDef.image;
     if (imagePath) {
-      const fullImagePath = resolveImagePath(imagePath, sourceDir);
+      let resolvedImagePath = imagePath;
+      let fullImagePath = resolveImagePath(imagePath, sourceDir);
+
+      // If theme is active, try themed image first
+      if (themeSuffix) {
+        const themedPath = applyImageSuffix(imagePath, themeSuffix);
+        const themedFullPath = resolveImagePath(themedPath, sourceDir);
+        if (await fileExists(themedFullPath)) {
+          resolvedImagePath = themedPath;
+          fullImagePath = themedFullPath;
+        }
+      }
+
       const { mime, data } = await imageToBase64(fullImagePath);
       if (data) {
         imageDataUri = `data:${mime};base64,${data}`;
         const sizeKb = Math.round(data.length * 0.75 / 1024);
-        console.log(`  [IMG] ${basename(imagePath)} (${sizeKb}KB)`);
+        console.log(`  [IMG] ${basename(resolvedImagePath)} (${sizeKb}KB)`);
       } else {
         console.warn(`  [WARN] Missing image: ${imagePath}`);
       }
@@ -319,7 +342,7 @@ function generateStandaloneHtml(
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: ${options.primaryColor};
-            --bg: #0d0d0d;
+            --bg: ${options.backgroundColor};
             --bg-light: #F2EFEA;
             --notes-width: 350px;
         }
@@ -1013,6 +1036,17 @@ export async function renderStandaloneHtml(
   const { voices, onProgress, ...restOptions } = options || {};
   const opts = { ...DEFAULT_OPTIONS, ...restOptions };
 
+  // Resolve theme for image suffix
+  const theme = opts.theme ? resolveTheme(opts.theme) : undefined;
+  const themeSuffix = theme?.imageSuffix || '';
+
+  // Apply theme colors if not explicitly overridden
+  if (theme) {
+    if (!options?.primaryColor) opts.primaryColor = theme.primaryColor;
+    if (!options?.backgroundColor) opts.backgroundColor = theme.backgroundColor;
+    if (!options?.textColor) opts.textColor = theme.textColor;
+  }
+
   // Output directory is where audio files are located (from timeline generation)
   const outputDir = dirname(outputPath);
 
@@ -1034,6 +1068,7 @@ export async function renderStandaloneHtml(
     opts,
     voices,
     onProgress,
+    themeSuffix,
   );
 
   // Generate HTML

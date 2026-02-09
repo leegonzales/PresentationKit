@@ -31,6 +31,7 @@ interface HtmlOptions {
   standalone?: boolean;
   mp3Bitrate?: string;
   verbose?: boolean;
+  theme?: string;
 }
 
 /**
@@ -55,6 +56,10 @@ export function registerHtmlCommand(program: Command): void {
       '64k'
     )
     .option('-v, --verbose', 'Enable verbose output')
+    .option(
+      '-t, --theme <name>',
+      'Image theme variant (e.g., lego, branded)'
+    )
     .action(htmlAction);
 }
 
@@ -93,6 +98,9 @@ async function htmlAction(
     if (options.standalone) {
       printKeyValue('MP3 Bitrate', options.mp3Bitrate || '64k');
     }
+    if (options.theme) {
+      printKeyValue('Theme', options.theme);
+    }
     console.log();
 
     // Parse the talk track
@@ -123,6 +131,7 @@ async function htmlAction(
     // Generate HTML based on mode
     let outputPath: string;
     let fileSizeMb: number | undefined;
+    const themeSuffix = options.theme ? `-${options.theme}` : '';
 
     if (options.standalone) {
       // Standalone mode: embed all assets as base64
@@ -145,11 +154,12 @@ async function htmlAction(
       const result = await renderStandaloneHtml(
         talkTrack,
         timeline,
-        join(outputDir, 'presentation-standalone.html'),
+        join(outputDir, `presentation-standalone${themeSuffix}.html`),
         sourceDir,
         {
           mp3Bitrate: options.mp3Bitrate || '64k',
           primaryColor: talkTrack.branding?.primary,
+          theme: options.theme,
           onProgress: (message, progress) => {
             spinner.update(`${message}`);
           },
@@ -163,9 +173,10 @@ async function htmlAction(
       // Standard mode: external assets
       spinner.start('Generating HTML presentation...');
 
-      outputPath = join(outputDir, 'presentation.html');
+      outputPath = join(outputDir, `presentation${themeSuffix}.html`);
       await renderHtmlPresentation(talkTrack, timeline, outputPath, {
         primaryColor: talkTrack.branding?.primary,
+        theme: options.theme,
       });
 
       spinner.succeed('HTML generation complete!');

@@ -30,6 +30,8 @@ export interface HtmlOptions {
   enablePrintSupport?: boolean;
   /** Target presentation duration in minutes (for timer warnings) */
   targetMinutes?: number;
+  /** Theme name for image variants and color presets */
+  theme?: string;
 }
 
 /**
@@ -47,6 +49,7 @@ export const DEFAULT_HTML_OPTIONS: Required<HtmlOptions> = {
   enableTouchNavigation: true,
   enablePrintSupport: true,
   targetMinutes: 45,
+  theme: '',
 };
 
 /**
