@@ -138,6 +138,7 @@ function prepareSlides(
       audioPath: audioPath ? options.audioBasePath + audioPath.split('/').pop() : null,
       audioDuration,
       speakerNotes,
+      speaker: content?.speaker,
       isAppendix,
     });
   }
@@ -265,6 +266,8 @@ function mergeOptions(
     textColor: options?.textColor ?? branding.text ?? theme?.textColor ?? DEFAULT_HTML_OPTIONS.textColor,
     targetMinutes: talkTrack.targetMinutes,
     theme: themeName,
+    // Speaker precedence: user options > frontmatter > default (false)
+    showSpeakers: options?.showSpeakers ?? talkTrack.showSpeakers ?? DEFAULT_HTML_OPTIONS.showSpeakers,
     ...options,
   };
 }

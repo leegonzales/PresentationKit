@@ -32,6 +32,8 @@ export interface HtmlOptions {
   targetMinutes?: number;
   /** Theme name for image variants and color presets */
   theme?: string;
+  /** Show speaker indicator badges (default: from frontmatter or false) */
+  showSpeakers?: boolean;
 }
 
 /**
@@ -50,6 +52,7 @@ export const DEFAULT_HTML_OPTIONS: Required<HtmlOptions> = {
   enablePrintSupport: true,
   targetMinutes: 45,
   theme: '',
+  showSpeakers: false,
 };
 
 /**
@@ -88,6 +91,8 @@ export interface PreparedHtmlSlide {
   voiceAudio?: VoiceAudio[];
   /** Cleaned speaker notes for display */
   speakerNotes?: string;
+  /** Speaker name for this slide (extracted from **[NAME]** in audio block) */
+  speaker?: string;
   /** Whether this is an appendix slide */
   isAppendix: boolean;
 }

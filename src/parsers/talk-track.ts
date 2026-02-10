@@ -51,6 +51,7 @@ const FrontmatterSchema = z.object({
   target_minutes: z.number().int().positive(),
   audio_voice: z.string().default('af_heart'),
   branding: z.union([z.string(), BrandConfigSchema]).optional(),
+  show_speakers: z.boolean().optional(),
   sections: z.array(SectionSchema).min(1),
 });
 
@@ -258,6 +259,22 @@ function parseSemanticTags(audioText: string): SemanticTag[] {
 }
 
 /**
+ * Extracts speaker name from audio text.
+ * Matches **[NAME]** or *[NAME]* at the start of audio text.
+ */
+export function parseSpeakerLabel(audioText: string): string | undefined {
+  const match = audioText.match(/^\s*\*{1,2}\[([A-Z_]+)\]\*{1,2}/);
+  return match ? match[1] : undefined;
+}
+
+/**
+ * Strips speaker label from audio text for clean TTS input.
+ */
+export function stripSpeakerLabel(audioText: string): string {
+  return audioText.replace(/^\s*\*{1,2}\[([A-Z_]+)\]\*{1,2}\s*/m, '').trim();
+}
+
+/**
  * Strips semantic tags from audio text for clean TTS input.
  */
 export function stripSemanticTags(audioText: string): string {
@@ -336,11 +353,15 @@ function parseSlideContent(content: string, slides: SlideDefinition[]): Map<stri
 
     // Extract audio block
     const audioMatch = sectionContent.match(/<!-- AUDIO -->\n?([\s\S]*?)\n?<!-- \/AUDIO -->/);
-    const audioText = audioMatch ? audioMatch[1].trim() : '';
+    const rawAudioText = audioMatch ? audioMatch[1].trim() : '';
 
     if (!audioMatch) {
       errors.push(`Slide "${slug}": Missing <!-- AUDIO --> block`);
     }
+
+    // Extract speaker label (e.g., **[JORDAN]**) before stripping
+    const speaker = parseSpeakerLabel(rawAudioText);
+    const audioText = speaker ? stripSpeakerLabel(rawAudioText) : rawAudioText;
 
     // Extract speaker notes
     const notesMatch = sectionContent.match(/\*\*Speaker Notes:\*\*\s*\n?([\s\S]*?)(?=\n---|\n## |$)/);
@@ -356,6 +377,7 @@ function parseSlideContent(content: string, slides: SlideDefinition[]): Map<stri
       audioText,
       speakerNotes,
       semanticTags,
+      speaker,
     });
   }
 
@@ -461,6 +483,7 @@ export function parseTalkTrack(content: string): TalkTrackV5 {
     targetMinutes: frontmatter.target_minutes,
     audioVoice: frontmatter.audio_voice ?? 'af_heart',
     branding,
+    showSpeakers: frontmatter.show_speakers,
     sections: frontmatter.sections,
     slides,
     slideContent,

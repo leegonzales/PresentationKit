@@ -92,6 +92,8 @@ export interface SlideContent {
   speakerNotes?: string;
   /** Parsed semantic tags from the audio content */
   semanticTags: SemanticTag[];
+  /** Speaker name extracted from **[NAME]** label in audio block */
+  speaker?: string;
 }
 
 /**
@@ -117,6 +119,8 @@ export interface TalkTrackV5 {
   audioVoice: string;
   /** Visual branding configuration */
   branding?: BrandConfig;
+  /** Whether to show speaker indicators in the presentation */
+  showSpeakers?: boolean;
   /** Section definitions */
   sections: Section[];
   /** Slide definitions from the slides table */
@@ -139,6 +143,7 @@ export interface RawFrontmatter {
   target_minutes: number;
   audio_voice?: string;
   branding?: string | BrandConfig;
+  show_speakers?: boolean;
   sections: Section[];
 }
 

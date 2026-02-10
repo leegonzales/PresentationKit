@@ -17,6 +17,7 @@ import type { Section } from '../../parsers/types.js';
  */
 export function stripSemanticTags(audioText: string): string {
   return audioText
+    .replace(/^\s*\*{1,2}\[([A-Z_]+)\]\*{1,2}\s*/m, '') // Strip speaker labels
     .replace(
       /\[(HOOK|KEY_POINT|EVIDENCE|STORY|TRANSITION|CALLBACK|LANDING|CTA|PAUSE)(?::\d+)?\]/gi,
       '',

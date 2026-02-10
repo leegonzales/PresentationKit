@@ -293,6 +293,24 @@ function generateStyles(options: Required<HtmlOptions>): string {
             white-space: nowrap;
         }
 
+        .speaker-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            white-space: nowrap;
+            transition: opacity 0.3s;
+        }
+        .speaker-badge.hidden { display: none; }
+
         .progress-bar {
             width: 150px;
             height: 4px;
@@ -1267,6 +1285,7 @@ function generateSlidesJs(slides: PreparedHtmlSlide[]): string {
             image: '${escapeJs(slide.imagePath)}',
             section: '${escapeJs(slide.section)}',
             sectionColor: '${escapeJs(slide.sectionColor)}',
+            speaker: ${slide.speaker ? `'${escapeJs(slide.speaker)}'` : 'null'},
             audio: ${audioPath},
             audioDuration: ${slide.audioDuration},
             voiceAudio: ${voiceAudioJs},
@@ -1376,6 +1395,7 @@ function generateScript(
         const nextBtn = document.getElementById('nextBtn');
         const playBtn = document.getElementById('playBtn');
         const sectionLabel = document.getElementById('sectionLabel');
+        const speakerBadge = document.getElementById('speakerBadge');
         const progressFill = document.getElementById('progressFill');
         const slideCounter = document.getElementById('slideCounter');
         const audioIndicator = document.getElementById('audioIndicator');
@@ -1456,6 +1476,18 @@ function generateScript(
             sectionLabel.textContent = slide.section;
             sectionLabel.style.color = slide.sectionColor;
             progressFill.style.background = slide.sectionColor;
+
+            // Update speaker badge
+            if (speakerBadge) {
+                if (slide.speaker) {
+                    speakerBadge.textContent = slide.speaker;
+                    speakerBadge.style.borderColor = slide.sectionColor;
+                    speakerBadge.style.color = slide.sectionColor;
+                    speakerBadge.classList.remove('hidden');
+                } else {
+                    speakerBadge.classList.add('hidden');
+                }
+            }
 
             // Update counter
             slideCounter.textContent = (currentIndex + 1) + ' / ' + slides.length;
@@ -2751,6 +2783,7 @@ export function generateHtmlPresentation(
             <!-- Progress -->
             <div class="progress">
                 <span class="section-label" id="sectionLabel">Loading...</span>
+                ${opts.showSpeakers ? '<span class="speaker-badge hidden" id="speakerBadge"></span>' : ''}
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>

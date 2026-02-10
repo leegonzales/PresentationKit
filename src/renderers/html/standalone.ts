@@ -58,6 +58,8 @@ export interface StandaloneHtmlOptions {
   onProgress?: (message: string, progress: number) => void;
   /** Multi-voice configuration (if provided, enables voice toggle) */
   voices?: VoiceConfig[];
+  /** Show speaker indicator badges (default: from frontmatter or false) */
+  showSpeakers?: boolean;
 }
 
 /**
@@ -70,6 +72,7 @@ const DEFAULT_OPTIONS: Required<Omit<StandaloneHtmlOptions, 'onProgress' | 'voic
   mp3Bitrate: '64k',
   enableAutoAdvance: true,
   theme: '',
+  showSpeakers: false,
 };
 
 /**
@@ -165,6 +168,7 @@ interface PreparedStandaloneSlide {
   title: string;
   section: string;
   sectionColor: string;
+  speaker?: string;
   imageDataUri: string;
   audioDataUri: string;
   /** Multi-voice audio data URIs keyed by voice name (lowercase) */
@@ -293,6 +297,7 @@ async function prepareSlides(
       title: slideDef.title,
       section: sectionName,
       sectionColor,
+      speaker: content?.speaker,
       imageDataUri,
       audioDataUri,
       voiceAudioDataUris,
@@ -324,7 +329,7 @@ function generateStandaloneHtml(
       });
       voiceAudioJs = `{ ${voiceEntries.join(', ')} }`;
     }
-    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', voiceAudio: ${voiceAudioJs}, notes: '${slide.notes}' }`;
+    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', speaker: ${slide.speaker ? `'${escapeJs(slide.speaker)}'` : 'null'}, image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', voiceAudio: ${voiceAudioJs}, notes: '${slide.notes}' }`;
   });
   const slideData = slideDataEntries.join(',\n');
 
@@ -410,6 +415,21 @@ function generateStandaloneHtml(
             text-transform: uppercase;
             letter-spacing: 0.5px;
             z-index: 10;
+        }
+        .speaker-badge {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 10;
+            border: 1.5px solid rgba(255,255,255,0.5);
+            background: rgba(0,0,0,0.4);
         }
         .audio-indicator {
             position: absolute;
@@ -740,6 +760,7 @@ ${slideData}
         ];
 
         const hasMultiVoice = ${hasMultiVoice};
+        const showSpeakers = ${options.showSpeakers};
         const voiceNames = ${JSON.stringify(voiceNames.map(v => v.toLowerCase()))};
         let currentVoice = voiceNames.length > 0 ? voiceNames[0] : null;
         let currentSlideIndex = 0;
@@ -786,6 +807,14 @@ ${slideData}
                 sectionIndicator.className = 'section-indicator';
                 sectionIndicator.style.background = slide.sectionColor;
                 sectionIndicator.textContent = slide.section;
+
+                // Speaker badge (only if showSpeakers and speaker data exists)
+                if (showSpeakers && slide.speaker) {
+                    const speakerEl = document.createElement('div');
+                    speakerEl.className = 'speaker-badge';
+                    speakerEl.textContent = slide.speaker;
+                    slideEl.appendChild(speakerEl);
+                }
 
                 // Audio indicator uses static content only
                 const audioIndicator = document.createElement('div');
@@ -1045,6 +1074,11 @@ export async function renderStandaloneHtml(
     if (!options?.primaryColor) opts.primaryColor = theme.primaryColor;
     if (!options?.backgroundColor) opts.backgroundColor = theme.backgroundColor;
     if (!options?.textColor) opts.textColor = theme.textColor;
+  }
+
+  // Pick up showSpeakers from frontmatter if not explicitly set
+  if (options?.showSpeakers === undefined && talkTrack.showSpeakers !== undefined) {
+    opts.showSpeakers = talkTrack.showSpeakers;
   }
 
   // Output directory is where audio files are located (from timeline generation)
