@@ -3,13 +3,24 @@
  *
  * Render video from an existing build.
  * Requires audio to already be generated.
+ *
+ * Supports two modes:
+ * - Single pass: renders entire presentation in one Remotion call
+ * - Section split: renders each section independently, stitches with ffmpeg
  */
 
 import { Command } from 'commander';
 import { resolve, dirname, join } from 'node:path';
-import { mkdir, stat } from 'node:fs/promises';
+import { mkdir, stat, readFile } from 'node:fs/promises';
 
 import type { VideoQuality } from '../../orchestrator/types.js';
+import {
+  renderVideoWithPreset,
+  estimateRenderTime,
+  renderBySections,
+  splitTimelineBySections,
+} from '../../renderers/remotion/index.js';
+import type { Timeline } from '../../generators/timeline/types.js';
 import {
   ProgressSpinner,
   printHeader,
@@ -27,6 +38,8 @@ interface VideoOptions {
   quality: string;
   fps: string;
   outputDir?: string;
+  split?: string;
+  parallel?: string;
   verbose?: boolean;
 }
 
@@ -52,6 +65,16 @@ export function registerVideoCommand(program: Command): void {
       '-d, --output-dir <dir>',
       'Output directory'
     )
+    .option(
+      '-s, --split <mode>',
+      'Split rendering by sections (none or sections)',
+      'sections'
+    )
+    .option(
+      '-p, --parallel <n>',
+      'Max concurrent section renders (with --split sections)',
+      '1'
+    )
     .option('-v, --verbose', 'Enable verbose output')
     .action(videoAction);
 }
@@ -76,6 +99,8 @@ async function videoAction(
     // Validate options
     const quality = validateQuality(options.quality);
     const fps = validateFps(options.fps);
+    const splitMode = validateSplitMode(options.split ?? 'sections');
+    const parallel = validateParallel(options.parallel ?? '1');
 
     // Determine directories
     const outputDir = options.outputDir
@@ -97,14 +122,18 @@ async function videoAction(
       );
     }
 
-    // Check for timeline (optional but recommended)
+    // Check for timeline
     let hasTimeline = false;
     try {
       await stat(timelinePath);
       hasTimeline = true;
     } catch {
-      printWarning(
-        'Timeline not found. Video timing may be estimated from audio duration.'
+      // Timeline required
+    }
+
+    if (!hasTimeline) {
+      throw new Error(
+        `Timeline not found at ${timelinePath}. Run \`pk build\` first to generate timeline.json.`
       );
     }
 
@@ -114,62 +143,137 @@ async function videoAction(
     // Get resolution dimensions
     const resolution = getResolution(quality);
 
+    // Load timeline
+    const timelineData = JSON.parse(
+      await readFile(timelinePath, 'utf-8')
+    ) as Timeline;
+
+    // Override timeline fps if user specified a different value
+    if (fps !== timelineData.fps) {
+      timelineData.fps = fps;
+    }
+
     // Display configuration
     console.log('Video Configuration:');
     printKeyValue('Source', absolutePath);
-    printKeyValue('Audio Directory', audioDir);
     printKeyValue('Output Directory', outputDir);
     printKeyValue('Quality', quality);
     printKeyValue('Resolution', `${resolution.width}x${resolution.height}`);
     printKeyValue('FPS', fps.toString());
-    printKeyValue('Has Timeline', hasTimeline ? 'Yes' : 'No (will estimate)');
-    console.log();
+    printKeyValue('Render Mode', splitMode === 'sections' ? 'Section split' : 'Single pass');
 
-    // Start video rendering
-    spinner.start('Preparing video render...');
+    if (splitMode === 'sections') {
+      const sections = splitTimelineBySections(timelineData);
+      printKeyValue('Sections', `${sections.length}`);
+      printKeyValue('Parallel', parallel.toString());
 
-    // TODO: Integrate with actual Remotion renderer
-    // const { renderVideo } = await import('../../renderers/remotion/index.js');
-    //
-    // spinner.update('Loading timeline...');
-    // const timeline = hasTimeline
-    //   ? JSON.parse(await readFile(timelinePath, 'utf-8'))
-    //   : await buildTimelineFromAudio(audioDir);
-    //
-    // spinner.update('Rendering video...');
-    // const result = await renderVideo(timeline, {
-    //   quality,
-    //   fps,
-    //   outputDir,
-    // });
-
-    // Placeholder: simulate rendering stages
-    const stages = [
-      'Loading assets...',
-      'Preparing compositions...',
-      'Rendering frames...',
-      'Encoding video...',
-      'Finalizing output...',
-    ];
-
-    for (const stage of stages) {
-      spinner.update(stage);
-      // Simulate processing time
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      if (options.verbose) {
+        console.log('\nSection breakdown:');
+        for (const section of sections) {
+          printKeyValue(
+            `  ${section.name}`,
+            `${section.slideCount} slides, ${section.durationSecs.toFixed(1)}s`
+          );
+        }
+      }
     }
 
-    spinner.succeed('Video rendering complete!');
+    // Estimate render time
+    const estimatedSecs = estimateRenderTime(timelineData, quality);
+    printKeyValue(
+      'Estimated Render Time',
+      `~${Math.ceil(estimatedSecs / 60)} minutes`
+    );
+    console.log();
 
-    const elapsed = Date.now() - startTime;
+    // Start rendering
+    spinner.start('Preparing video render...');
+
     const videoPath = join(outputDir, 'presentation.mp4');
 
-    printSection('Results');
-    printKeyValue('Video Output', videoPath);
-    printKeyValue('Quality', quality);
-    printKeyValue('FPS', fps.toString());
-    printKeyValue('Duration', formatDuration(elapsed));
+    if (splitMode === 'sections') {
+      // Section-based rendering
+      const result = await renderBySections(
+        timelineData,
+        outputDir,
+        {
+          quality,
+          codec: 'h264',
+          crf: quality === '4k' ? 20 : quality === '720p' ? 25 : 23,
+          outputDir,
+          outputFilename: 'presentation.mp4',
+          concurrency: parallel,
+          onProgress: (progress: number, section: string) => {
+            const percent = Math.round(progress * 100);
+            if (progress < 0.08) {
+              spinner.update('Bundling Remotion project...');
+            } else if (progress < 0.1) {
+              spinner.update('Preparing compositions...');
+            } else if (progress < 0.95) {
+              spinner.update(
+                `Rendering [${section}] ${percent}%`
+              );
+            } else if (progress < 1) {
+              spinner.update('Stitching sections with ffmpeg...');
+            }
+          },
+        }
+      );
 
-    printSuccess(`Video rendered to ${videoPath}`);
+      spinner.succeed('Video rendering complete!');
+
+      const elapsed = Date.now() - startTime;
+      const sizeMB = (result.sizeBytes / (1024 * 1024)).toFixed(1);
+
+      printSection('Results');
+      printKeyValue('Video Output', result.outputPath);
+      printKeyValue('Video Duration', `${result.durationSecs.toFixed(1)}s`);
+      printKeyValue('File Size', `${sizeMB} MB`);
+      printKeyValue('Sections Rendered', `${result.sections.length}`);
+      printKeyValue('Quality', quality);
+      printKeyValue('FPS', fps.toString());
+      printKeyValue('Render Time', formatDuration(elapsed));
+
+      printSuccess(`Video rendered to ${result.outputPath}`);
+    } else {
+      // Single-pass rendering
+      let lastPercent = 0;
+
+      const result = await renderVideoWithPreset(
+        timelineData,
+        outputDir,
+        videoPath,
+        quality,
+        (progress: number) => {
+          const percent = Math.round(progress * 100);
+          if (percent > lastPercent) {
+            lastPercent = percent;
+            if (progress < 0.1) {
+              spinner.update('Bundling Remotion project...');
+            } else if (progress < 0.15) {
+              spinner.update('Selecting composition...');
+            } else {
+              spinner.update(
+                `Rendering video... ${percent}%`
+              );
+            }
+          }
+        }
+      );
+
+      spinner.succeed('Video rendering complete!');
+
+      const elapsed = Date.now() - startTime;
+
+      printSection('Results');
+      printKeyValue('Video Output', result.outputPath);
+      printKeyValue('Video Duration', `${result.durationSecs.toFixed(1)}s`);
+      printKeyValue('Quality', quality);
+      printKeyValue('FPS', fps.toString());
+      printKeyValue('Render Time', formatDuration(elapsed));
+
+      printSuccess(`Video rendered to ${result.outputPath}`);
+    }
   } catch (error) {
     spinner.fail('Video rendering failed');
     const message = error instanceof Error ? error.message : String(error);
@@ -209,6 +313,37 @@ function validateFps(fps: string): number {
   if (isNaN(parsed) || parsed < 1 || parsed > 120) {
     throw new Error(
       `Invalid FPS: ${fps}. FPS must be a number between 1 and 120.`
+    );
+  }
+
+  return parsed;
+}
+
+/**
+ * Validate split mode option.
+ */
+function validateSplitMode(mode: string): 'none' | 'sections' {
+  const valid = ['none', 'sections'];
+  const normalized = mode.toLowerCase();
+
+  if (!valid.includes(normalized)) {
+    throw new Error(
+      `Invalid split mode: ${mode}. Valid modes: ${valid.join(', ')}`
+    );
+  }
+
+  return normalized as 'none' | 'sections';
+}
+
+/**
+ * Validate parallel option.
+ */
+function validateParallel(value: string): number {
+  const parsed = parseInt(value, 10);
+
+  if (isNaN(parsed) || parsed < 1 || parsed > 8) {
+    throw new Error(
+      `Invalid parallel value: ${value}. Must be between 1 and 8.`
     );
   }
 

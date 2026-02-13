@@ -13,6 +13,19 @@ export {
   VideoRenderError,
 } from './renderer.js';
 
+// Section-based rendering
+export {
+  renderBySections,
+  splitTimelineBySections,
+} from './section-renderer.js';
+
+export type {
+  TimelineSection,
+  SectionRenderResult,
+  SectionRenderOptions,
+  SectionPipelineResult,
+} from './section-renderer.js';
+
 // Composition components
 export { Presentation, PresentationWithAudioTrack } from './Presentation.js';
 export { RemotionRoot } from './Root.js';
