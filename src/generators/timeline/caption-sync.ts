@@ -83,7 +83,7 @@ function splitOnClauses(sentence: string): string[] {
   }
 
   const parts: string[] = [];
-  let remaining = sentence;
+  const remaining = sentence;
   let currentPart = '';
 
   // Split while trying to keep parts under max length
