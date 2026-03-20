@@ -76,6 +76,17 @@ export interface SlideDefinition {
 }
 
 /**
+ * Auxiliary content for a slide (prompts, handouts, reference text).
+ * Rendered as a pop-up drawer with copy-to-clipboard, not read aloud.
+ */
+export interface AuxContent {
+  /** Display title for the AUX drawer pill and header */
+  title: string;
+  /** Raw markdown body of the AUX block */
+  body: string;
+}
+
+/**
  * Complete content for a single slide.
  * Parsed from individual slide sections in the markdown.
  */
@@ -94,6 +105,8 @@ export interface SlideContent {
   semanticTags: SemanticTag[];
   /** Speaker name extracted from **[NAME]** label in audio block */
   speaker?: string;
+  /** Auxiliary content (prompts, handouts) displayed in a drawer */
+  auxContent?: AuxContent;
 }
 
 /**

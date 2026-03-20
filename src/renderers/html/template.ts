@@ -996,6 +996,254 @@ function generateStyles(options: Required<HtmlOptions>): string {
             border-top: none;
         }
 
+        /* AUX Content Pill */
+        .aux-pill {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(30, 30, 30, 0.85);
+            border: 1px solid var(--control-border);
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 200;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .aux-pill:hover {
+            background: rgba(50, 50, 50, 0.95);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .aux-pill.visible {
+            display: inline-flex;
+        }
+
+        .aux-pill-icon {
+            font-size: 14px;
+        }
+
+        /* AUX Content Drawer */
+        .aux-drawer {
+            position: fixed;
+            top: 0;
+            right: -42%;
+            width: 40%;
+            min-width: 320px;
+            max-width: 600px;
+            height: 100vh;
+            background: rgba(20, 20, 20, 0.98);
+            border-left: 1px solid var(--control-border);
+            z-index: 850;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .aux-drawer.visible {
+            right: 0;
+        }
+
+        .aux-drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 849;
+            display: none;
+        }
+
+        .aux-drawer-backdrop.visible {
+            display: block;
+        }
+
+        .aux-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--control-border);
+            flex-shrink: 0;
+        }
+
+        .aux-drawer-title {
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .aux-drawer-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .aux-copy-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .aux-copy-btn:hover {
+            filter: brightness(1.15);
+        }
+
+        .aux-copy-btn.copied {
+            background: #2d5a2d;
+        }
+
+        .aux-drawer-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+
+        .aux-drawer-close:hover {
+            color: white;
+        }
+
+        .aux-drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .aux-drawer-content h1,
+        .aux-drawer-content h2,
+        .aux-drawer-content h3 {
+            color: var(--primary);
+            margin: 1.2em 0 0.6em;
+        }
+
+        .aux-drawer-content h1 { font-size: 1.4em; }
+        .aux-drawer-content h2 { font-size: 1.2em; }
+        .aux-drawer-content h3 { font-size: 1.05em; }
+
+        .aux-drawer-content p {
+            margin-bottom: 0.8em;
+        }
+
+        .aux-drawer-content ul, .aux-drawer-content ol {
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+        }
+
+        .aux-drawer-content li {
+            margin-bottom: 0.3em;
+        }
+
+        .aux-drawer-content code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        .aux-drawer-content pre {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 14px 16px;
+            overflow-x: auto;
+            margin: 0.8em 0;
+        }
+
+        .aux-drawer-content pre code {
+            background: none;
+            padding: 0;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        .aux-drawer-content blockquote {
+            border-left: 3px solid var(--primary);
+            padding-left: 14px;
+            margin: 0.8em 0;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+
+        .aux-drawer-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.8em 0;
+        }
+
+        .aux-drawer-content th, .aux-drawer-content td {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .aux-drawer-content th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .aux-drawer-content hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            margin: 1.2em 0;
+        }
+
+        @media (max-width: 768px) {
+            .aux-drawer {
+                width: 100%;
+                min-width: unset;
+                max-width: unset;
+                right: -100%;
+            }
+
+            .aux-pill {
+                bottom: 70px;
+                left: 10px;
+                font-size: 11px;
+                padding: 5px 10px;
+            }
+        }
+
+        @media print {
+            .aux-pill,
+            .aux-drawer,
+            .aux-drawer-backdrop {
+                display: none !important;
+            }
+        }
+
         /* Blank Screen Overlay */
         .blank-screen {
             position: fixed;
@@ -1279,6 +1527,12 @@ function generateSlidesJs(slides: PreparedHtmlSlide[]): string {
       voiceAudioJs = `{ ${voiceEntries.join(', ')} }`;
     }
 
+    // Generate AUX content object if present
+    let auxContentJs = 'null';
+    if (slide.auxContent) {
+      auxContentJs = `{ title: '${escapeJs(slide.auxContent.title)}', body: '${escapeJs(slide.auxContent.body)}' }`;
+    }
+
     return `{
             slug: '${escapeJs(slide.slug)}',
             title: '${escapeJs(slide.title)}',
@@ -1290,6 +1544,7 @@ function generateSlidesJs(slides: PreparedHtmlSlide[]): string {
             audioDuration: ${slide.audioDuration},
             voiceAudio: ${voiceAudioJs},
             notes: ${notes},
+            auxContent: ${auxContentJs},
             isAppendix: ${slide.isAppendix}
         }`;
   });
@@ -1374,6 +1629,7 @@ function generateScript(
         let annotationColor = '#ff0000';
         let annotationSize = 4;
         let isDrawing = false;
+        let showAuxDrawer = false;
         let showPacing = true;
         let showRehearsalStats = false;
         let slideStartTime = 0;
@@ -1423,6 +1679,13 @@ function generateScript(
         const pacingText = document.getElementById('pacingText');
         const rehearsalStats = document.getElementById('rehearsalStats');
         const rehearsalTimes = document.getElementById('rehearsalTimes');
+        const auxPill = document.getElementById('auxPill');
+        const auxPillText = document.getElementById('auxPillText');
+        const auxDrawer = document.getElementById('auxDrawer');
+        const auxDrawerBackdrop = document.getElementById('auxDrawerBackdrop');
+        const auxDrawerTitle = document.getElementById('auxDrawerTitle');
+        const auxDrawerContent = document.getElementById('auxDrawerContent');
+        const auxCopyBtn = document.getElementById('auxCopyBtn');
         const ctx = annotationCanvas.getContext('2d');
         const presentation = document.querySelector('.presentation');
 
@@ -1519,6 +1782,24 @@ function generateScript(
 
             // Reset audio indicator
             audioIndicator.classList.remove('active');
+
+            // Update AUX pill visibility
+            if (slide.auxContent) {
+                auxPillText.textContent = slide.auxContent.title;
+                auxPill.classList.add('visible');
+            } else {
+                auxPill.classList.remove('visible');
+                // Close AUX drawer if open and new slide has no AUX
+                if (showAuxDrawer) {
+                    toggleAuxDrawer();
+                }
+            }
+
+            // Update AUX drawer content if it is open
+            if (showAuxDrawer && slide.auxContent) {
+                auxDrawerTitle.textContent = slide.auxContent.title;
+                auxDrawerContent.innerHTML = renderAuxMarkdown(slide.auxContent.body);
+            }
 
             // Update UI elements if visible
             if (showGrid) updateGridSelection();
@@ -2158,13 +2439,13 @@ function generateScript(
     <div class="pv-container">
         <div class="pv-current">
             <h3>Current Slide</h3>
-            <img id="pvCurrent" src="">
+            <img id="pvCurrent" src="" alt="Current slide">
             <div class="pv-timer" id="pvTimer">00:00</div>
         </div>
         <div class="pv-sidebar">
             <div class="pv-next">
                 <h3>Next Slide</h3>
-                <img id="pvNext" src="">
+                <img id="pvNext" src="" alt="Next slide">
             </div>
             <div class="pv-notes">
                 <h3>Speaker Notes</h3>
@@ -2296,6 +2577,9 @@ function generateScript(
             }
         }
 
+        // --- AUX Drawer Functions ---
+        ${generateAuxScript()}
+
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
             // Don't capture if jump dialog is open (except Escape)
@@ -2372,7 +2656,9 @@ function generateScript(
                     toggleHelp();
                     break;
                 case 'Escape':
-                    if (showBlankScreen) {
+                    if (showAuxDrawer) {
+                        toggleAuxDrawer();
+                    } else if (showBlankScreen) {
                         hideBlankScreen();
                     } else if (showAnnotation) {
                         toggleAnnotation();
@@ -2692,6 +2978,172 @@ function generateJumpDialog(): string {
  * @returns Complete HTML document as string
  */
 /**
+ * Generates the JavaScript for AUX drawer functionality.
+ * Kept as a separate function to avoid template literal escaping issues
+ * with regex patterns and backticks.
+ */
+function generateAuxScript(): string {
+  // Use single-quoted strings and avoid backticks in the output JS
+  const bt = '`'; // backtick character for use in generated JS regex
+  const lines: string[] = [];
+
+  lines.push(`
+        function toggleAuxDrawer() {
+            showAuxDrawer = !showAuxDrawer;
+            auxDrawer.classList.toggle('visible', showAuxDrawer);
+            auxDrawerBackdrop.classList.toggle('visible', showAuxDrawer);
+
+            if (showAuxDrawer) {
+                var slide = slides[currentIndex];
+                if (slide.auxContent) {
+                    auxDrawerTitle.textContent = slide.auxContent.title;
+                    auxDrawerContent.innerHTML = renderAuxMarkdown(slide.auxContent.body);
+                }
+                auxCopyBtn.classList.remove('copied');
+                auxCopyBtn.innerHTML = '&#128203; Copy';
+            }
+        }
+
+        function copyAuxContent() {
+            var slide = slides[currentIndex];
+            if (!slide.auxContent) return;
+
+            var rawBody = unescapeAuxText(slide.auxContent.body);
+
+            navigator.clipboard.writeText(rawBody).then(function() {
+                auxCopyBtn.classList.add('copied');
+                auxCopyBtn.innerHTML = '&#10003; Copied!';
+                setTimeout(function() {
+                    auxCopyBtn.classList.remove('copied');
+                    auxCopyBtn.innerHTML = '&#128203; Copy';
+                }, 2000);
+            }).catch(function() {
+                var textarea = document.createElement('textarea');
+                textarea.value = rawBody;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    auxCopyBtn.classList.add('copied');
+                    auxCopyBtn.innerHTML = '&#10003; Copied!';
+                    setTimeout(function() {
+                        auxCopyBtn.classList.remove('copied');
+                        auxCopyBtn.innerHTML = '&#128203; Copy';
+                    }, 2000);
+                } catch (err) {}
+                document.body.removeChild(textarea);
+            });
+        }
+
+        function unescapeAuxText(text) {
+            return text
+                .replace(/\\\\n/g, '\\n')
+                .replace(/\\\\'/g, "'")
+                .replace(/\\\\"/g, '"')
+                .replace(/\\\\u003C/g, '<')
+                .replace(/\\u003C/g, '<');
+        }
+
+        function renderAuxMarkdown(text) {
+            var md = unescapeAuxText(text);
+
+            // Escape HTML
+            md = md.replace(/&/g, '&amp;')
+                   .replace(/</g, '&lt;')
+                   .replace(/>/g, '&gt;');
+
+            // Code blocks: use char code to match backticks
+            var codeBlockRe = new RegExp(String.fromCharCode(96,96,96) + '([\\\\w]*)\\n([\\\\s\\\\S]*?)' + String.fromCharCode(96,96,96), 'g');
+            md = md.replace(codeBlockRe, function(m, lang, code) {
+                return '<pre><code>' + code.trim() + '</code></pre>';
+            });
+
+            // Inline code
+            var inlineCodeRe = new RegExp(String.fromCharCode(96) + '([^' + String.fromCharCode(96) + ']+)' + String.fromCharCode(96), 'g');
+            md = md.replace(inlineCodeRe, '<code>$1</code>');
+
+            // Headers
+            md = md.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            md = md.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            md = md.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            // Bold and italic
+            md = md.replace(/\\*\\*\\*(.+?)\\*\\*\\*/g, '<strong><em>$1</em></strong>');
+            md = md.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+            md = md.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+
+            // Blockquotes
+            md = md.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+            // Horizontal rules
+            md = md.replace(/^---$/gm, '<hr>');
+
+            // Unordered lists
+            md = md.replace(/^[\\*\\-] (.+)$/gm, '<li>$1</li>');
+
+            // Ordered lists
+            md = md.replace(/^\\d+\\. (.+)$/gm, '<li>$1</li>');
+
+            // Wrap consecutive li items in ul
+            md = md.replace(/(<li>[\\s\\S]*?<\\/li>\\s*)+/g, function(m) {
+                return '<ul>' + m + '</ul>';
+            });
+
+            // Links
+            md = md.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href="$2" target="_blank" style="color: var(--primary);">$1</a>');
+
+            // Tables
+            md = md.replace(/^\\|(.+)\\|$/gm, function(m, content) {
+                var cells = content.split('|').map(function(c) { return c.trim(); });
+                if (cells.every(function(c) { return /^[:\\-]+$/.test(c); })) return '';
+                var cellsHtml = cells.map(function(c) { return '<td>' + c + '</td>'; }).join('');
+                return '<tr>' + cellsHtml + '</tr>';
+            });
+            md = md.replace(/(<tr>[\\s\\S]*?<\\/tr>\\s*)+/g, function(m) {
+                m = m.replace(/<tr>(.*?)<\\/tr>/, function(mm, inner) {
+                    return '<thead><tr>' + inner.replace(/<td>/g, '<th>').replace(/<\\/td>/g, '</th>') + '</tr></thead>';
+                });
+                return '<table>' + m + '</table>';
+            });
+
+            // Paragraphs
+            md = md.replace(/^(?!<[a-z\\/]|$)(.*$)/gm, '<p>$1</p>');
+            md = md.replace(/<p><\\/p>/g, '');
+
+            return md;
+        }
+  `);
+
+  return lines.join('');
+}
+
+/**
+ * Generates the AUX content drawer HTML.
+ * The drawer content is populated dynamically by JavaScript.
+ */
+function generateAuxDrawer(): string {
+  return `
+    <!-- AUX Drawer Backdrop -->
+    <div class="aux-drawer-backdrop" id="auxDrawerBackdrop" onclick="toggleAuxDrawer()"></div>
+
+    <!-- AUX Content Drawer -->
+    <div class="aux-drawer" id="auxDrawer">
+        <div class="aux-drawer-header">
+            <span class="aux-drawer-title" id="auxDrawerTitle">Content</span>
+            <div class="aux-drawer-actions">
+                <button class="aux-copy-btn" id="auxCopyBtn" onclick="copyAuxContent()">
+                    &#128203; Copy
+                </button>
+                <button class="aux-drawer-close" onclick="toggleAuxDrawer()">&times;</button>
+            </div>
+        </div>
+        <div class="aux-drawer-content" id="auxDrawerContent"></div>
+    </div>`;
+}
+
+/**
  * Generates voice toggle HTML if multi-voice is enabled.
  */
 function generateVoiceToggle(slides: PreparedHtmlSlide[]): string {
@@ -2745,6 +3197,12 @@ export function generateHtmlPresentation(
     <div class="presentation">
         <div class="slide-container">
             <img class="slide" id="currentSlide" src="" alt="Slide">
+        </div>
+
+        <!-- AUX Content Pill -->
+        <div class="aux-pill" id="auxPill" onclick="toggleAuxDrawer()">
+            <span class="aux-pill-icon">&#128203;</span>
+            <span id="auxPillText">Content</span>
         </div>
 
         <div class="speaker-notes" id="speakerNotes">
@@ -2818,6 +3276,8 @@ export function generateHtmlPresentation(
     ${generateGridOverlay(slides)}
 
     ${generateDrawer(slides)}
+
+    ${generateAuxDrawer()}
 
     ${generateSectionPanel(sections)}
 

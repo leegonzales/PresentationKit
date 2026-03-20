@@ -68,6 +68,17 @@ export interface VoiceAudio {
 }
 
 /**
+ * Auxiliary content for a slide (prompts, handouts, reference text).
+ * Rendered as a pop-up drawer with copy-to-clipboard, not read aloud.
+ */
+export interface PreparedAuxContent {
+  /** Display title for the AUX drawer pill and header */
+  title: string;
+  /** Raw markdown body of the AUX block */
+  body: string;
+}
+
+/**
  * Prepared slide data for HTML presentation rendering.
  */
 export interface PreparedHtmlSlide {
@@ -93,6 +104,8 @@ export interface PreparedHtmlSlide {
   speakerNotes?: string;
   /** Speaker name for this slide (extracted from **[NAME]** in audio block) */
   speaker?: string;
+  /** Auxiliary content (prompts, handouts) for drawer display */
+  auxContent?: PreparedAuxContent;
   /** Whether this is an appendix slide */
   isAppendix: boolean;
 }

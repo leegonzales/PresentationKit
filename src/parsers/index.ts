@@ -11,6 +11,7 @@ export type {
   Section,
   SlideDefinition,
   SlideContent,
+  AuxContent,
   SemanticTag,
   SemanticTagType,
   BrandConfig,

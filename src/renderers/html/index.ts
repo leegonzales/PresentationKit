@@ -139,6 +139,7 @@ function prepareSlides(
       audioDuration,
       speakerNotes,
       speaker: content?.speaker,
+      auxContent: content?.auxContent,
       isAppendix,
     });
   }

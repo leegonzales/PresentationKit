@@ -174,6 +174,8 @@ interface PreparedStandaloneSlide {
   /** Multi-voice audio data URIs keyed by voice name (lowercase) */
   voiceAudioDataUris: Record<string, string>;
   notes: string;
+  /** Auxiliary content for drawer display */
+  auxContent?: { title: string; body: string };
 }
 
 /**
@@ -302,6 +304,7 @@ async function prepareSlides(
       audioDataUri,
       voiceAudioDataUris,
       notes: escapeJs(notes),
+      auxContent: content?.auxContent,
     });
   }
 
@@ -329,7 +332,10 @@ function generateStandaloneHtml(
       });
       voiceAudioJs = `{ ${voiceEntries.join(', ')} }`;
     }
-    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', speaker: ${slide.speaker ? `'${escapeJs(slide.speaker)}'` : 'null'}, image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', voiceAudio: ${voiceAudioJs}, notes: '${slide.notes}' }`;
+    const auxContentJs = slide.auxContent
+      ? `{ title: '${escapeJs(slide.auxContent.title)}', body: '${escapeJs(slide.auxContent.body)}' }`
+      : 'null';
+    return `            { id: '${slide.id}', title: '${escapeJs(slide.title)}', section: '${escapeJs(slide.section)}', sectionColor: '${slide.sectionColor}', speaker: ${slide.speaker ? `'${escapeJs(slide.speaker)}'` : 'null'}, image: '${slide.imageDataUri}', audio: '${slide.audioDataUri}', voiceAudio: ${voiceAudioJs}, notes: '${slide.notes}', auxContent: ${auxContentJs} }`;
   });
   const slideData = slideDataEntries.join(',\n');
 
@@ -676,6 +682,104 @@ function generateStandaloneHtml(
             letter-spacing: 0.5px;
             z-index: 10;
         }
+        .aux-pill {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(30, 30, 30, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 200;
+            backdrop-filter: blur(8px);
+        }
+        .aux-pill:hover {
+            background: rgba(50, 50, 50, 0.95);
+            color: white;
+            border-color: var(--primary);
+        }
+        .aux-pill.visible { display: inline-flex; }
+        .aux-drawer-backdrop {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 249; display: none;
+        }
+        .aux-drawer-backdrop.visible { display: block; }
+        .aux-drawer {
+            position: fixed; top: 0; right: -42%;
+            width: 40%; min-width: 320px; max-width: 600px;
+            height: 100vh;
+            background: rgba(20, 20, 20, 0.98);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 250;
+            transition: right 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .aux-drawer.visible { right: 0; }
+        .aux-drawer-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .aux-drawer-title {
+            color: var(--primary); font-size: 14px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .aux-drawer-actions { display: flex; align-items: center; gap: 8px; }
+        .aux-copy-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 12px; background: var(--primary); color: white;
+            border: none; border-radius: 4px; font-size: 12px;
+            font-weight: 500; cursor: pointer; transition: all 0.15s;
+        }
+        .aux-copy-btn:hover { filter: brightness(1.15); }
+        .aux-copy-btn.copied { background: #2d5a2d; }
+        .aux-drawer-close {
+            background: none; border: none;
+            color: rgba(255, 255, 255, 0.6); font-size: 22px;
+            cursor: pointer; padding: 4px 8px; line-height: 1;
+        }
+        .aux-drawer-close:hover { color: white; }
+        .aux-drawer-content {
+            flex: 1; overflow-y: auto; padding: 20px;
+            color: rgba(255, 255, 255, 0.9); font-size: 14px; line-height: 1.7;
+        }
+        .aux-drawer-content h1, .aux-drawer-content h2, .aux-drawer-content h3 { color: var(--primary); margin: 1.2em 0 0.6em; }
+        .aux-drawer-content h1 { font-size: 1.4em; }
+        .aux-drawer-content h2 { font-size: 1.2em; }
+        .aux-drawer-content h3 { font-size: 1.05em; }
+        .aux-drawer-content p { margin-bottom: 0.8em; }
+        .aux-drawer-content code {
+            background: rgba(255, 255, 255, 0.1); padding: 2px 6px;
+            border-radius: 3px; font-family: 'SF Mono', 'Menlo', monospace; font-size: 0.9em;
+        }
+        .aux-drawer-content pre {
+            background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 0.8em 0;
+        }
+        .aux-drawer-content pre code { background: none; padding: 0; font-size: 0.85em; line-height: 1.5; }
+        .aux-drawer-content blockquote {
+            border-left: 3px solid var(--primary); padding-left: 14px;
+            margin: 0.8em 0; color: rgba(255, 255, 255, 0.7); font-style: italic;
+        }
+        .aux-drawer-content table { width: 100%; border-collapse: collapse; margin: 0.8em 0; }
+        .aux-drawer-content th, .aux-drawer-content td {
+            border: 1px solid rgba(255, 255, 255, 0.15); padding: 6px 10px;
+            text-align: left; font-size: 0.9em;
+        }
+        .aux-drawer-content th { background: rgba(255, 255, 255, 0.05); font-weight: 600; color: var(--primary); }
+        @media (max-width: 768px) {
+            .aux-drawer { width: 100%; min-width: unset; max-width: unset; right: -100%; }
+            .aux-pill { bottom: 70px; left: 10px; font-size: 11px; padding: 5px 10px; }
+        }
     </style>
 </head>
 <body>
@@ -739,6 +843,23 @@ function generateStandaloneHtml(
             <button class="notes-close" id="notesClose">&times;</button>
         </div>
         <div class="notes-content" id="notesContent"></div>
+    </div>
+
+    <div class="aux-pill" id="auxPill">
+        <span>&#128203;</span>
+        <span id="auxPillText">Content</span>
+    </div>
+
+    <div class="aux-drawer-backdrop" id="auxDrawerBackdrop"></div>
+    <div class="aux-drawer" id="auxDrawer">
+        <div class="aux-drawer-header">
+            <span class="aux-drawer-title" id="auxDrawerTitle">Content</span>
+            <div class="aux-drawer-actions">
+                <button class="aux-copy-btn" id="auxCopyBtn">&#128203; Copy</button>
+                <button class="aux-drawer-close" id="auxDrawerClose">&times;</button>
+            </div>
+        </div>
+        <div class="aux-drawer-content" id="auxDrawerContent"></div>
     </div>
 
     <div class="shortcuts-help" id="shortcutsHelp">
@@ -877,6 +998,26 @@ ${slideData}
             currentSlideEl.textContent = index + 1;
             notesContent.textContent = slides[index].notes;
             timerEl.textContent = '00:00';
+
+            // Update AUX pill
+            const slide = slides[index];
+            const auxPill = document.getElementById('auxPill');
+            const auxPillText = document.getElementById('auxPillText');
+            if (slide.auxContent) {
+                auxPillText.textContent = slide.auxContent.title;
+                auxPill.classList.add('visible');
+            } else {
+                auxPill.classList.remove('visible');
+                if (document.getElementById('auxDrawer').classList.contains('visible')) {
+                    toggleAuxDrawer();
+                }
+            }
+
+            // Update AUX drawer content if open
+            if (document.getElementById('auxDrawer').classList.contains('visible') && slide.auxContent) {
+                document.getElementById('auxDrawerTitle').textContent = slide.auxContent.title;
+                document.getElementById('auxDrawerContent').innerHTML = renderAuxMarkdown(slide.auxContent.body);
+            }
         }
 
         function nextSlide() {
@@ -970,6 +1111,55 @@ ${slideData}
             shortcutsHelp.classList.toggle('visible');
         }
 
+        let showAuxDrawer = false;
+        function toggleAuxDrawer() {
+            showAuxDrawer = !showAuxDrawer;
+            document.getElementById('auxDrawer').classList.toggle('visible', showAuxDrawer);
+            document.getElementById('auxDrawerBackdrop').classList.toggle('visible', showAuxDrawer);
+            if (showAuxDrawer) {
+                const slide = slides[currentSlideIndex];
+                if (slide.auxContent) {
+                    document.getElementById('auxDrawerTitle').textContent = slide.auxContent.title;
+                    document.getElementById('auxDrawerContent').innerHTML = renderAuxMarkdown(slide.auxContent.body);
+                }
+                const copyBtn = document.getElementById('auxCopyBtn');
+                copyBtn.classList.remove('copied');
+                copyBtn.innerHTML = '&#128203; Copy';
+            }
+        }
+
+        function copyAuxContent() {
+            const slide = slides[currentSlideIndex];
+            if (!slide.auxContent) return;
+            const rawBody = slide.auxContent.body.replace(/\\\\n/g, '\\n').replace(/\\n/g, '\\n').replace(/\\\\'/g, "\\'").replace(/\\\\"/g, '\\"').replace(/\\\\u003C/g, '<').replace(/\\u003C/g, '<');
+            const copyBtn = document.getElementById('auxCopyBtn');
+            navigator.clipboard.writeText(rawBody).then(function() {
+                copyBtn.classList.add('copied');
+                copyBtn.innerHTML = '&#10003; Copied!';
+                setTimeout(function() { copyBtn.classList.remove('copied'); copyBtn.innerHTML = '&#128203; Copy'; }, 2000);
+            }).catch(function() {});
+        }
+
+        function renderAuxMarkdown(text) {
+            let md = text.replace(/\\\\n/g, '\\n').replace(/\\n/g, '\\n').replace(/\\\\'/g, "\\'").replace(/\\\\"/g, '\\"').replace(/\\\\u003C/g, '<').replace(/\\u003C/g, '<');
+            md = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            md = md.replace(/\`\`\`([\\w]*)\\n([\\s\\S]*?)\`\`\`/g, function(m, l, c) { return '<pre><code>' + c.trim() + '</code></pre>'; });
+            md = md.replace(/\`([^\`]+)\`/g, '<code>$1</code>');
+            md = md.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            md = md.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            md = md.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            md = md.replace(/\\*\\*\\*(.+?)\\*\\*\\*/g, '<strong><em>$1</em></strong>');
+            md = md.replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>');
+            md = md.replace(/\\*(.+?)\\*/g, '<em>$1</em>');
+            md = md.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+            md = md.replace(/^---$/gm, '<hr>');
+            md = md.replace(/^[\\*\\-] (.+)$/gm, '<li>$1</li>');
+            md = md.replace(/(<li>.*<\\/li>\\n?)+/g, function(m) { return '<ul>' + m + '</ul>'; });
+            md = md.replace(/^(?!<[a-z]|$)(.*$)/gm, '<p>$1</p>');
+            md = md.replace(/<p><\\/p>/g, '');
+            return md;
+        }
+
         function setupEventListeners() {
             document.getElementById('btnPrev').addEventListener('click', prevSlide);
             document.getElementById('btnNext').addEventListener('click', nextSlide);
@@ -979,6 +1169,10 @@ ${slideData}
             document.getElementById('btnFullscreen').addEventListener('click', toggleFullscreen);
             document.getElementById('btnHelp').addEventListener('click', toggleHelp);
             document.getElementById('notesClose').addEventListener('click', toggleNotes);
+            document.getElementById('auxPill').addEventListener('click', toggleAuxDrawer);
+            document.getElementById('auxDrawerBackdrop').addEventListener('click', toggleAuxDrawer);
+            document.getElementById('auxCopyBtn').addEventListener('click', copyAuxContent);
+            document.getElementById('auxDrawerClose').addEventListener('click', toggleAuxDrawer);
 
             // Voice toggle buttons
             if (hasMultiVoice) {
@@ -1013,7 +1207,8 @@ ${slideData}
                         break;
                     case '?': toggleHelp(); break;
                     case 'Escape':
-                        shortcutsHelp.classList.remove('visible');
+                        if (showAuxDrawer) { toggleAuxDrawer(); }
+                        else { shortcutsHelp.classList.remove('visible'); }
                         break;
                     case 'Home': goToSlide(0); break;
                     case 'End': goToSlide(slides.length - 1); break;

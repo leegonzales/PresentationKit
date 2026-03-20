@@ -12,6 +12,7 @@ import type {
   Section,
   SlideDefinition,
   SlideContent,
+  AuxContent,
   SemanticTag,
   SemanticTagType,
   BrandConfig,
@@ -285,6 +286,38 @@ export function stripSemanticTags(audioText: string): string {
 }
 
 // -----------------------------------------------------------------------------
+// AUX Block Parsing
+// -----------------------------------------------------------------------------
+
+/**
+ * Extracts AUX block content from a slide section.
+ * AUX blocks contain auxiliary content (prompts, handouts, reference text)
+ * that appears as a pop-up drawer on slides but is NOT read aloud.
+ *
+ * Format:
+ * <!-- AUX title="My Title" -->
+ * markdown content here...
+ * <!-- /AUX -->
+ */
+function parseAuxBlock(sectionContent: string): AuxContent | undefined {
+  const auxMatch = sectionContent.match(
+    /<!-- AUX title="([^"]*)" -->\n?([\s\S]*?)\n?<!-- \/AUX -->/,
+  );
+  if (!auxMatch) {
+    return undefined;
+  }
+
+  const title = auxMatch[1].trim();
+  const body = auxMatch[2].trim();
+
+  if (!title || !body) {
+    return undefined;
+  }
+
+  return { title, body };
+}
+
+// -----------------------------------------------------------------------------
 // Image Path Normalization
 // -----------------------------------------------------------------------------
 
@@ -367,6 +400,9 @@ function parseSlideContent(content: string, slides: SlideDefinition[]): Map<stri
     const notesMatch = sectionContent.match(/\*\*Speaker Notes:\*\*\s*\n?([\s\S]*?)(?=\n---|\n## |$)/);
     const speakerNotes = notesMatch ? notesMatch[1].trim() : undefined;
 
+    // Extract AUX block (auxiliary content for drawer display)
+    const auxContent = parseAuxBlock(sectionContent);
+
     // Parse semantic tags
     const semanticTags = parseSemanticTags(audioText);
 
@@ -378,6 +414,7 @@ function parseSlideContent(content: string, slides: SlideDefinition[]): Map<stri
       speakerNotes,
       semanticTags,
       speaker,
+      auxContent,
     });
   }
 
