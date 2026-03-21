@@ -6,6 +6,7 @@ export default tseslint.config(
   },
   ...tseslint.configs.recommended,
   {
+    files: ["**/*.ts", "**/*.tsx"],
     rules: {
       // Allow explicit any where needed (tighten later)
       "@typescript-eslint/no-explicit-any": "warn",
