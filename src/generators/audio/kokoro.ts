@@ -24,11 +24,20 @@ import type {
 } from './types.js';
 
 /**
- * Path to the claude-speak CLI tool.
+ * Path to the Python interpreter in the claude-speak venv.
+ * Used to run kokoro-tts.py directly (no daemon needed).
  */
-const CLAUDE_SPEAK_CLI = resolve(
+const KOKORO_PYTHON = resolve(
   process.env.HOME || '~',
-  'Projects/leegonzales/claude-speak/.venv/bin/claude-speak-client'
+  'Projects/leegonzales/claude-speak/.venv/bin/python'
+);
+
+/**
+ * Path to the batch TTS script.
+ */
+const KOKORO_TTS_SCRIPT = resolve(
+  import.meta.dirname || __dirname,
+  '../../../tools/kokoro-tts.py'
 );
 
 /**
@@ -184,56 +193,62 @@ async function concatenateWavFiles(
 }
 
 /**
- * Generate TTS audio for a text segment using claude-speak CLI.
+ * Generate TTS audio for a text segment via mlx_audio (no daemon).
  *
  * @param text - Text to synthesize
- * @param outputPrefix - Output file prefix (generates prefix_0.wav, prefix_1.wav, etc.)
+ * @param outputDir - Output directory for generated WAV chunks
  * @param voice - Voice preset
  * @param speed - Speech speed multiplier
  * @returns Array of generated chunk file paths
  */
 async function generateTtsChunks(
   text: string,
-  outputPrefix: string,
+  outputDir: string,
   voice: string,
   speed: number
 ): Promise<string[]> {
-  await execa(CLAUDE_SPEAK_CLI, [
-    '-v', voice,
-    '-s', String(speed),
-    '-o', outputPrefix,
-    text,
-  ]);
+  await mkdir(outputDir, { recursive: true });
 
-  // Find generated chunks (claude-speak creates prefix_0.wav, prefix_1.wav, etc.)
-  const dir = join(outputPrefix, '..');
-  const prefix = outputPrefix.split('/').pop() || outputPrefix;
-  const files = await readdir(resolve(dir));
+  const manifest = {
+    model: 'mlx-community/Kokoro-82M-bf16',
+    segments: [{ text, voice, speed, output_dir: outputDir }],
+  };
 
-  const chunks = files
-    .filter((f) => f.startsWith(`${prefix}_`) && f.endsWith('.wav'))
-    .sort()
-    .map((f) => join(resolve(dir), f));
+  const { stdout } = await execa(KOKORO_PYTHON, [KOKORO_TTS_SCRIPT], {
+    input: JSON.stringify(manifest),
+    timeout: 120_000,
+  });
 
-  return chunks;
+  const results = JSON.parse(stdout) as Array<{
+    index: number;
+    files: string[];
+    error?: string;
+  }>;
+
+  if (results.length === 0 || results[0].files.length === 0) {
+    const err = results[0]?.error || 'No audio generated';
+    throw new Error(`Kokoro TTS failed: ${err}`);
+  }
+
+  return results[0].files;
 }
 
 /**
  * Generate audio for a single text segment, handling chunking by Kokoro.
  *
  * @param text - Text to synthesize
- * @param outputPrefix - Temporary output prefix
+ * @param segmentDir - Temporary output directory for this segment
  * @param voice - Voice preset
  * @param speed - Speech speed
  * @returns Path to the concatenated segment audio file
  */
 async function generateSegmentAudio(
   text: string,
-  outputPrefix: string,
+  segmentDir: string,
   voice: string,
   speed: number
 ): Promise<string> {
-  const chunks = await generateTtsChunks(text, outputPrefix, voice, speed);
+  const chunks = await generateTtsChunks(text, segmentDir, voice, speed);
 
   if (chunks.length === 0) {
     throw new Error('No audio chunks generated');
@@ -244,7 +259,7 @@ async function generateSegmentAudio(
   }
 
   // Concatenate multiple chunks
-  const segmentOutput = `${outputPrefix}_merged.wav`;
+  const segmentOutput = join(segmentDir, 'merged.wav');
   await concatenateWavFiles(chunks, segmentOutput);
   return segmentOutput;
 }
@@ -267,14 +282,17 @@ async function generateAudioWithPauses(
 
   // Simple case: no pauses
   if (segments.length === 1 && segments[0].pauseAfterMs === null) {
-    const tempPrefix = outputFile.replace('.wav', '_temp');
+    const tempSegDir = outputFile.replace('.wav', '_seg');
     const segmentFile = await generateSegmentAudio(
       segments[0].text,
-      tempPrefix,
+      tempSegDir,
       voice,
       speed
     );
     await rename(segmentFile, outputFile);
+    // Clean up temp segment dir
+    const { rm } = await import('node:fs/promises');
+    await rm(tempSegDir, { recursive: true, force: true }).catch(() => {});
     return;
   }
 
@@ -287,12 +305,12 @@ async function generateAudioWithPauses(
   try {
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
-      const segmentPrefix = join(tempDir, `seg_${String(i).padStart(3, '0')}`);
+      const segmentSubDir = join(tempDir, `seg_${String(i).padStart(3, '0')}`);
 
       // Generate audio for this segment
       const segmentFile = await generateSegmentAudio(
         segment.text,
-        segmentPrefix,
+        segmentSubDir,
         voice,
         speed
       );
