@@ -1001,15 +1001,15 @@ function generateStyles(options: Required<HtmlOptions>): string {
             position: fixed;
             bottom: 80px;
             left: 20px;
-            display: none;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 14px;
-            background: rgba(30, 30, 30, 0.85);
+            padding: 8px 16px;
+            background: rgba(30, 30, 30, 0.9);
             border: 1px solid var(--control-border);
             border-radius: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -1024,8 +1024,9 @@ function generateStyles(options: Required<HtmlOptions>): string {
             border-color: var(--primary);
         }
 
-        .aux-pill.visible {
-            display: inline-flex;
+        .aux-pill.has-content {
+            border-color: var(--primary);
+            background: rgba(30, 50, 50, 0.9);
         }
 
         .aux-pill-icon {
@@ -1783,22 +1784,26 @@ function generateScript(
             // Reset audio indicator
             audioIndicator.classList.remove('active');
 
-            // Update AUX pill visibility
+            // Update AUX pill — always visible, content-aware label
             if (slide.auxContent) {
                 auxPillText.textContent = slide.auxContent.title;
-                auxPill.classList.add('visible');
+                auxPill.classList.add('has-content');
             } else {
-                auxPill.classList.remove('visible');
-                // Close AUX drawer if open and new slide has no AUX
-                if (showAuxDrawer) {
-                    toggleAuxDrawer();
-                }
+                auxPillText.textContent = 'Prompts';
+                auxPill.classList.remove('has-content');
             }
 
             // Update AUX drawer content if it is open
-            if (showAuxDrawer && slide.auxContent) {
-                auxDrawerTitle.textContent = slide.auxContent.title;
-                auxDrawerContent.innerHTML = renderAuxMarkdown(slide.auxContent.body);
+            if (showAuxDrawer) {
+                if (slide.auxContent) {
+                    auxDrawerTitle.textContent = slide.auxContent.title;
+                    auxDrawerContent.innerHTML = renderAuxMarkdown(slide.auxContent.body);
+                    auxCopyBtn.style.display = '';
+                } else {
+                    auxDrawerTitle.textContent = 'Supplementary Content';
+                    auxDrawerContent.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-style: italic; margin-top: 2em; text-align: center;">No supplementary content for this slide.</p>';
+                    auxCopyBtn.style.display = 'none';
+                }
             }
 
             // Update UI elements if visible
@@ -2998,6 +3003,11 @@ function generateAuxScript(): string {
                 if (slide.auxContent) {
                     auxDrawerTitle.textContent = slide.auxContent.title;
                     auxDrawerContent.innerHTML = renderAuxMarkdown(slide.auxContent.body);
+                    auxCopyBtn.style.display = '';
+                } else {
+                    auxDrawerTitle.textContent = 'Supplementary Content';
+                    auxDrawerContent.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-style: italic; margin-top: 2em; text-align: center;">No supplementary content for this slide.</p>';
+                    auxCopyBtn.style.display = 'none';
                 }
                 auxCopyBtn.classList.remove('copied');
                 auxCopyBtn.innerHTML = '&#128203; Copy';

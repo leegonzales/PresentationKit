@@ -686,15 +686,15 @@ function generateStandaloneHtml(
             position: fixed;
             bottom: 80px;
             left: 20px;
-            display: none;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 14px;
-            background: rgba(30, 30, 30, 0.85);
+            padding: 8px 16px;
+            background: rgba(30, 30, 30, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -706,7 +706,7 @@ function generateStandaloneHtml(
             color: white;
             border-color: var(--primary);
         }
-        .aux-pill.visible { display: inline-flex; }
+        .aux-pill.has-content { border-color: var(--primary); background: rgba(30, 50, 50, 0.9); }
         .aux-drawer-backdrop {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.4);
@@ -999,24 +999,30 @@ ${slideData}
             notesContent.textContent = slides[index].notes;
             timerEl.textContent = '00:00';
 
-            // Update AUX pill
+            // Update AUX pill — always visible, content-aware label
             const slide = slides[index];
             const auxPill = document.getElementById('auxPill');
             const auxPillText = document.getElementById('auxPillText');
+            const auxCopyBtn = document.getElementById('auxCopyBtn');
             if (slide.auxContent) {
                 auxPillText.textContent = slide.auxContent.title;
-                auxPill.classList.add('visible');
+                auxPill.classList.add('has-content');
             } else {
-                auxPill.classList.remove('visible');
-                if (document.getElementById('auxDrawer').classList.contains('visible')) {
-                    toggleAuxDrawer();
-                }
+                auxPillText.textContent = 'Prompts';
+                auxPill.classList.remove('has-content');
             }
 
             // Update AUX drawer content if open
-            if (document.getElementById('auxDrawer').classList.contains('visible') && slide.auxContent) {
-                document.getElementById('auxDrawerTitle').textContent = slide.auxContent.title;
-                document.getElementById('auxDrawerContent').innerHTML = renderAuxMarkdown(slide.auxContent.body);
+            if (document.getElementById('auxDrawer').classList.contains('visible')) {
+                if (slide.auxContent) {
+                    document.getElementById('auxDrawerTitle').textContent = slide.auxContent.title;
+                    document.getElementById('auxDrawerContent').innerHTML = renderAuxMarkdown(slide.auxContent.body);
+                    auxCopyBtn.style.display = '';
+                } else {
+                    document.getElementById('auxDrawerTitle').textContent = 'Supplementary Content';
+                    document.getElementById('auxDrawerContent').innerHTML = '<p style="color: rgba(255,255,255,0.5); font-style: italic; margin-top: 2em; text-align: center;">No supplementary content for this slide.</p>';
+                    auxCopyBtn.style.display = 'none';
+                }
             }
         }
 
@@ -1118,11 +1124,16 @@ ${slideData}
             document.getElementById('auxDrawerBackdrop').classList.toggle('visible', showAuxDrawer);
             if (showAuxDrawer) {
                 const slide = slides[currentSlideIndex];
+                const copyBtn = document.getElementById('auxCopyBtn');
                 if (slide.auxContent) {
                     document.getElementById('auxDrawerTitle').textContent = slide.auxContent.title;
                     document.getElementById('auxDrawerContent').innerHTML = renderAuxMarkdown(slide.auxContent.body);
+                    copyBtn.style.display = '';
+                } else {
+                    document.getElementById('auxDrawerTitle').textContent = 'Supplementary Content';
+                    document.getElementById('auxDrawerContent').innerHTML = '<p style="color: rgba(255,255,255,0.5); font-style: italic; margin-top: 2em; text-align: center;">No supplementary content for this slide.</p>';
+                    copyBtn.style.display = 'none';
                 }
-                const copyBtn = document.getElementById('auxCopyBtn');
                 copyBtn.classList.remove('copied');
                 copyBtn.innerHTML = '&#128203; Copy';
             }
