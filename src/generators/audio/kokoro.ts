@@ -28,7 +28,7 @@ import type {
  */
 const CLAUDE_SPEAK_CLI = resolve(
   process.env.HOME || '~',
-  'Projects/claude-speak/.venv/bin/claude-speak'
+  'Projects/leegonzales/claude-speak/.venv/bin/claude-speak-client'
 );
 
 /**

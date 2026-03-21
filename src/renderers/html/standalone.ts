@@ -706,7 +706,16 @@ function generateStandaloneHtml(
             color: white;
             border-color: var(--primary);
         }
-        .aux-pill.has-content { border-color: var(--primary); background: rgba(30, 50, 50, 0.9); }
+        .aux-pill.has-content {
+            background: rgba(180, 140, 20, 0.9);
+            color: white;
+            border-color: rgba(200, 160, 30, 1);
+            box-shadow: 0 0 8px rgba(180, 140, 20, 0.4);
+        }
+        .aux-pill.has-content:hover {
+            background: rgba(200, 160, 30, 1);
+            box-shadow: 0 0 12px rgba(200, 160, 30, 0.6);
+        }
         .aux-drawer-backdrop {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.4);
