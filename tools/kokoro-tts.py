@@ -19,7 +19,10 @@ Writes JSON results to stdout:
 
 Model is loaded once and reused for all segments.
 """
+import contextlib
+import io
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -32,6 +35,11 @@ def main():
     if not segments:
         json.dump([], sys.stdout)
         return
+
+    # Redirect stdout to stderr during imports and generation so
+    # mlx_audio's colored status messages don't contaminate JSON output.
+    real_stdout = sys.stdout
+    sys.stdout = sys.stderr
 
     from mlx_audio.tts.generate import generate_audio
 
@@ -70,6 +78,8 @@ def main():
             file=sys.stderr,
         )
 
+    # Restore stdout and write clean JSON
+    sys.stdout = real_stdout
     json.dump(results, sys.stdout)
 
 
