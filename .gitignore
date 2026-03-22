@@ -37,3 +37,4 @@ out/
 .claude/settings.local.json
 test-output/
 .beads/
+.worktrees/

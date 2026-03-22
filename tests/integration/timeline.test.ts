@@ -29,6 +29,7 @@ import type {
   AudioManifestEntry,
   Timeline,
   TimelineSlide,
+  WordTiming,
 } from '../../src/generators/timeline/types.js';
 
 // Get the directory of this test file
@@ -48,6 +49,20 @@ let timeline: Timeline;
  * Creates a mock audio manifest for testing.
  * Simulates audio generation without actual TTS calls.
  */
+/**
+ * Generate synthetic word timings from text, simulating ElevenLabs output.
+ */
+function generateMockWordTimings(text: string, duration: number): WordTiming[] {
+  const words = text.split(/\s+/).filter((w) => w);
+  if (words.length === 0) return [];
+  const wordDuration = duration / words.length;
+  return words.map((word, i) => ({
+    word,
+    start: i * wordDuration,
+    end: (i + 1) * wordDuration,
+  }));
+}
+
 function createMockAudioManifest(talkTrack: TalkTrackV5): AudioManifest {
   const entries = new Map<string, AudioManifestEntry>();
 
@@ -64,13 +79,14 @@ function createMockAudioManifest(talkTrack: TalkTrackV5): AudioManifest {
       slug: slide.slug,
       path: `audio/${slide.slug}.mp3`,
       duration,
-      provider: 'kokoro',
+      provider: 'elevenlabs',
+      wordTimings: generateMockWordTimings(cleanText, duration),
     });
   }
 
   return {
     voice: 'af_heart',
-    provider: 'kokoro',
+    provider: 'elevenlabs',
     entries,
   };
 }

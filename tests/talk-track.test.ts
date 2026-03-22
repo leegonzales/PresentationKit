@@ -247,7 +247,7 @@ describe('parseTalkTrack', () => {
       position: '1',
       slug: 'title',
       title: 'Title Slide',
-      image: 'slide-title.png',
+      image: 'images/slide-title.png',
       section: 'opening',
     });
   });

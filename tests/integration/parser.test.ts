@@ -130,7 +130,7 @@ describe('Parser Integration: Slides Table', () => {
 
   it('should parse slide images correctly', () => {
     const titleSlide = parsedTalkTrack.slides.find((s) => s.slug === 'title-slide');
-    expect(titleSlide?.image).toBe('slide-01-title.png');
+    expect(titleSlide?.image).toBe('images/slide-01-title.png');
   });
 
   it('should parse slide sections correctly', () => {
