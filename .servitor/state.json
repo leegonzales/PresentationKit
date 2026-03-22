@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "lastHeartbeat": "2026-03-22T17:26:00-06:00",
+  "heartbeatCount": 29,
+  "health": "green",
+  "testStatus": {
+    "total": 206,
+    "passed": 206,
+    "failed": 0,
+    "suites": 6,
+    "duration": "372ms",
+    "note": "All 206 pass on fix/stale-tests-and-a11y branch."
+  },
+  "buildStatus": "clean",
+  "ciStatus": "not-configured",
+  "openPRs": 2,
+  "openBeads": 0,
+  "prs": [
+    {
+      "number": 6,
+      "title": "chore: update patch-level dependencies",
+      "branch": "chore/patch-deps",
+      "state": "OPEN",
+      "mergeable": true,
+      "reviewed": true,
+      "reviewFeedbackAddressed": true,
+      "createdAt": "2026-03-17T20:28:09Z",
+      "note": "PR description updated to acknowledge transitive major bumps from Remotion. Awaiting Lee's merge."
+    },
+    {
+      "number": 7,
+      "title": "chore: add ESLint v9 flat config with TypeScript support",
+      "branch": "chore/eslint-config",
+      "state": "OPEN",
+      "mergeable": true,
+      "reviewed": true,
+      "reviewFeedbackAddressed": true,
+      "createdAt": "2026-03-19T06:53:00Z",
+      "note": "Commit 0d94f41 addresses Gemini feedback: TS rules scoped to *.ts/*.tsx, unused var removed. Awaiting Lee's merge."
+    }
+  ],
+  "orphanedBranches": [],
+  "concerns": [
+    {
+      "id": "branch-name-mismatch",
+      "severity": "trivial",
+      "description": "Branch fix/stale-tests-and-a11y now contains feat: AUX block, TTS refactor, UI refinements — name no longer matches content",
+      "discoveredAt": "2026-03-20",
+      "heartbeatsOpen": 7
+    }
+  ],
+  "resolved": [
+    {
+      "id": "pr6-review-feedback",
+      "resolution": "Updated PR #6 description to acknowledge transitive major bumps from Remotion update",
+      "resolvedAt": "2026-03-21"
+    },
+    {
+      "id": "uncommitted-fix-branch",
+      "resolution": "Committed stale test fixes and .gitignore update in 1fec5ca, pushed to fix/stale-tests-and-a11y",
+      "resolvedAt": "2026-03-22"
+    },
+    {
+      "id": "pr7-review-feedback",
+      "resolution": "Commit 0d94f41 — scoped TS rules to *.ts/*.tsx files, removed unused remaining var in caption-sync.ts",
+      "resolvedAt": "2026-03-21"
+    },
+    {
+      "id": "stale-worktree-contamination",
+      "resolution": "Removed stale .worktrees/eslint-config worktree that was doubling test suite",
+      "resolvedAt": "2026-03-18"
+    },
+    {
+      "id": "missing-eslint-config",
+      "resolution": "PR #7 opened for existing work on chore/eslint-config branch",
+      "resolvedAt": "2026-03-19"
+    },
+    {
+      "id": "patch-deps-available",
+      "resolution": "PR #6 opened with all patch-level updates",
+      "resolvedAt": "2026-03-17"
+    }
+  ],
+  "dependencies": {
+    "patchUpdatesAvailable": "Remotion 4.0.436→4.0.438, yaml 2.8.2→2.8.3, execa 9.3.0→9.3.1, got 14.4.1→14.4.9, nanoid 5.0.7→5.0.9, tsx 4.15.6→4.15.9, @types/react 18.3.3→18.3.28. Can pick up after PR #6 lands.",
+    "majorUpdatesAvailable": ["commander 12->14", "vitest 1.6->3.2", "zod 3->4", "react 18->19", "inquirer 9->13", "ora 8->9", "p-limit 6->7"]
+  },
+  "deadCode": [],
+  "formatEvolution": {
+    "auxBlocks": "New <!-- AUX title=\"...\" --> block type added to Talk Track v5 (dc3715d). Parser, types, and HTML renderers updated. AUX pill UI refined: always visible (c56a94b), gold/amber glow for has-content state (c98fb7c). 18 tests cover parsing, rendering, and edge cases. Clean extension.",
+    "ttsRefactor": "Kokoro TTS reworked: daemon dependency replaced with direct mlx_audio calls via tools/kokoro-tts.py (d38b09e). Stdout contamination fix applied (3662cee). Simpler architecture, fewer failure points."
+  },
+  "notes": "Twenty-ninth heartbeat. Committed and pushed 4 stale uncommitted test/gitignore files (28+ heartbeats overdue). Resolved uncommitted-fix-branch concern. Both PRs still awaiting Lee's merge. Engine healthy."
+}
