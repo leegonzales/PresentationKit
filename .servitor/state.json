@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "lastHeartbeat": "2026-03-22T17:26:00-06:00",
-  "heartbeatCount": 29,
+  "lastHeartbeat": "2026-03-26T23:05:00-06:00",
+  "heartbeatCount": 30,
   "health": "green",
   "testStatus": {
     "total": 206,
@@ -82,7 +82,7 @@
     }
   ],
   "dependencies": {
-    "patchUpdatesAvailable": "Remotion 4.0.436→4.0.438, yaml 2.8.2→2.8.3, execa 9.3.0→9.3.1, got 14.4.1→14.4.9, nanoid 5.0.7→5.0.9, tsx 4.15.6→4.15.9, @types/react 18.3.3→18.3.28. Can pick up after PR #6 lands.",
+    "patchUpdatesAvailable": "Remotion 4.0.436→4.0.441 (5 new releases since PR #6 filed), yaml 2.8.2→2.8.3. Pick up after PR #6 lands.",
     "majorUpdatesAvailable": ["commander 12->14", "vitest 1.6->3.2", "zod 3->4", "react 18->19", "inquirer 9->13", "ora 8->9", "p-limit 6->7"]
   },
   "deadCode": [],
@@ -90,5 +90,5 @@
     "auxBlocks": "New <!-- AUX title=\"...\" --> block type added to Talk Track v5 (dc3715d). Parser, types, and HTML renderers updated. AUX pill UI refined: always visible (c56a94b), gold/amber glow for has-content state (c98fb7c). 18 tests cover parsing, rendering, and edge cases. Clean extension.",
     "ttsRefactor": "Kokoro TTS reworked: daemon dependency replaced with direct mlx_audio calls via tools/kokoro-tts.py (d38b09e). Stdout contamination fix applied (3662cee). Simpler architecture, fewer failure points."
   },
-  "notes": "Twenty-ninth heartbeat. Committed and pushed 4 stale uncommitted test/gitignore files (28+ heartbeats overdue). Resolved uncommitted-fix-branch concern. Both PRs still awaiting Lee's merge. Engine healthy."
+  "notes": "Thirtieth heartbeat. Quiet stretch — no new code since heartbeat #29. All 206 tests still green. Two silent heartbeat runs (March 25, 26) left untracked log files, swept them in. Remotion now at 4.0.441 (5 patches past PR #6 scope). Both PRs #6 and #7 still awaiting Lee's merge. Engine healthy."
 }

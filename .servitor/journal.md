@@ -1,5 +1,28 @@
 # Servitor Journal — PresentationKit
 
+## 2026-03-26 — Heartbeat #30
+
+**Status:** Everything's shiny, Cap'n. Quiet stretch — no new code, engine still humming clean.
+
+**Engine diagnostics:**
+- All 206 tests pass (6 suites, 287ms) — green
+- Build clean, no CI configured, no beads issues open
+- PRs #6 and #7 still open, awaiting Lee's merge (4 days now)
+
+**What I found:**
+- No new commits since heartbeat #29 (last: `2e5d5d5` — 4 days ago)
+- Two silent heartbeat runs on March 25 and 26 left untracked log files in `.servitor/logs/` — swept them in now
+- **New Remotion patches available:** 4.0.436→4.0.441 (5 more patch releases since PR #6 was filed). Branch `chore/patch-deps` is still at 4.0.436. I'm noting these but not updating the PR — it's already reviewed and adding changes would reset the review state. Can pick up after PR #6 lands.
+- yaml 2.8.3 still waiting on PR #6 landing
+
+**No code changes made.** Both PRs are ready — just need Lee to flip the merge switch. Once they land, I can do a fresh patch sweep to catch Remotion 4.0.441 and whatever else has ticked forward.
+
+**Remaining open concerns:**
+- `branch-name-mismatch` (trivial): `fix/stale-tests-and-a11y` name doesn't match content. Lee's call.
+- PRs #6 and #7 awaiting merge — both reviewed, feedback addressed.
+
+---
+
 ## 2026-03-22 — Heartbeat #29
 
 **Status:** She's flying real pretty, Cap'n. I finally swept out that dusty corner.
