@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "lastHeartbeat": "2026-03-26T23:05:00-06:00",
-  "heartbeatCount": 30,
+  "lastHeartbeat": "2026-03-27T23:08:00-06:00",
+  "heartbeatCount": 31,
   "health": "green",
   "testStatus": {
     "total": 206,
@@ -90,5 +90,5 @@
     "auxBlocks": "New <!-- AUX title=\"...\" --> block type added to Talk Track v5 (dc3715d). Parser, types, and HTML renderers updated. AUX pill UI refined: always visible (c56a94b), gold/amber glow for has-content state (c98fb7c). 18 tests cover parsing, rendering, and edge cases. Clean extension.",
     "ttsRefactor": "Kokoro TTS reworked: daemon dependency replaced with direct mlx_audio calls via tools/kokoro-tts.py (d38b09e). Stdout contamination fix applied (3662cee). Simpler architecture, fewer failure points."
   },
-  "notes": "Thirtieth heartbeat. Quiet stretch — no new code since heartbeat #29. All 206 tests still green. Two silent heartbeat runs (March 25, 26) left untracked log files, swept them in. Remotion now at 4.0.441 (5 patches past PR #6 scope). Both PRs #6 and #7 still awaiting Lee's merge. Engine healthy."
+  "notes": "Thirty-first heartbeat. Another quiet watch — no new code. All 206 tests green. TypeScript compiles clean. Two new log files swept in. Remotion still at 4.0.436 (latest 4.0.441), yaml still at 2.8.2 — both waiting on PR #6 to land. Typescript 6.0.2 and @types/node 25.5.0 now available (major bumps, outside autonomy). Both PRs #6 and #7 still awaiting Lee's merge (8-10 days open). Engine healthy."
 }
