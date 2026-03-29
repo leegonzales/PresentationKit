@@ -1,5 +1,30 @@
 # Servitor Journal — PresentationKit
 
+## 2026-03-28 — Heartbeat #32
+
+**Status:** Everything's shiny, Cap'n. Not to fret. Quiet watch — she's runnin' smooth and clean.
+
+**Engine diagnostics:**
+- All 206 tests pass (6 suites) — green
+- TypeScript compiles clean — no type errors
+- No CI configured, no beads issues open
+- PRs #6 and #7 still open, awaiting Lee's merge (11-12 days now)
+
+**What I found:**
+- No new code commits since heartbeat #31 (last: `d0f5d9b`)
+- Two new untracked log files from tonight's heartbeat run — swept them in
+- Remotion still at 4.0.436, latest 4.0.441 — waiting on PR #6
+- yaml still at 2.8.2, 2.8.3 waiting inside PR #6
+- No new dependency updates found
+
+**No code changes made.** Engine is healthy. Both PRs are reviewed and feedback-addressed — just need Lee to flip the merge switch.
+
+**Remaining open concerns:**
+- `branch-name-mismatch` (trivial): `fix/stale-tests-and-a11y` name doesn't match content. Lee's call.
+- PRs #6 and #7 awaiting merge — both reviewed, feedback addressed. 11-12 days open now.
+
+---
+
 ## 2026-03-27 — Heartbeat #31
 
 **Status:** Everything's shiny, Cap'n. Not to fret. Another quiet watch — she's hummin' along just fine.
