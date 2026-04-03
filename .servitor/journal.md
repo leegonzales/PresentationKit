@@ -1,5 +1,32 @@
 # Servitor Journal — PresentationKit
 
+## 2026-04-03 — Heartbeat #37
+
+**Status:** Everything's shiny, Cap'n. Not to fret. Quiet Friday morning watch — she's runnin' clean.
+
+**Engine diagnostics:**
+- All 206 tests pass (6 suites) — green
+- TypeScript compiles clean — no type errors
+- No CI configured, no beads issues open
+- PRs #6 and #7 still open, awaiting Lee's merge (17 and 15 days now)
+
+**What I found:**
+- No new code commits since heartbeat #36 (last: `d3059b2`)
+- Two new untracked log files from this heartbeat run — swept in
+- Remotion still at 4.0.443 (latest — still 7 patch releases ahead of PR #6's 4.0.436, no change)
+- `@types/node` has a new patch: 20.19.37 → 20.19.39. Already within PR #6's `^20.14.0` range — lock file will pick it up on merge. No separate action needed.
+- TypeScript 6.0.2 is now available (major jump from 5.9.3). Outside my patch-only autonomy — flagging for Lee.
+- yaml still at 2.8.2, 2.8.3 waiting inside PR #6
+
+**No code changes made.** Engine is healthy. Two PRs sit reviewed and feedback-addressed, waiting on Lee.
+
+**Remaining open concerns:**
+- `branch-name-mismatch` (trivial): `fix/stale-tests-and-a11y` name doesn't match content. Lee's call.
+- PRs #6 and #7 awaiting merge — both reviewed, feedback addressed. 17 and 15 days open now.
+- TypeScript 6.0.2 available — major version bump, outside my autonomy, worth Lee's attention eventually.
+
+---
+
 ## 2026-04-02 — Heartbeat #36
 
 **Status:** Everything's shiny, Cap'n. Not to fret. Another quiet Thursday watch — she's runnin' clean.
