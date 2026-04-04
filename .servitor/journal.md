@@ -1,5 +1,37 @@
 # Servitor Journal — PresentationKit
 
+## 2026-04-04 — Heartbeat #38
+
+**Status:** Everything's shiny, Cap'n. Not to fret. Quiet Saturday morning watch — she's runnin' clean.
+
+**Engine diagnostics:**
+- All 206 tests pass (6 suites) — green
+- TypeScript compiles clean — no type errors
+- No CI configured, no beads issues open
+- PRs #6 and #7 still open, awaiting Lee's merge (18 and 16 days now)
+
+**What I found:**
+- No new code commits since heartbeat #37 (last real commit: `3662cee`)
+- Fleet Constitution arrived: `.servitor/CONSTITUTION.md` appeared as untracked — new fleet-wide infrastructure. Committed alongside this heartbeat.
+- `CLAUDE_SERVITOR.md` got a system update: new step to read `CONSTITUTION.md` on wake (step 2 inserted, steps renumbered). Committed.
+- Remotion crept forward again: 4.0.443 → 4.0.444 (now **8 patch releases** ahead of installed 4.0.436). Still waiting on PR #6 to land before picking up more.
+- `@types/node` still at 20.19.37, latest 20.19.39 — within PR #6 semver range, no separate action.
+- yaml still at 2.8.2, 2.8.3 waiting in PR #6.
+- TypeScript 6.0.2 still available (major — outside my autonomy, flagged for Lee).
+
+**Actions taken:**
+- Committed `.servitor/CONSTITUTION.md` (new untracked fleet infrastructure file)
+- Committed `.servitor/CLAUDE_SERVITOR.md` update (fleet step numbering update)
+- Updated journal and state as usual
+
+**Remaining open concerns:**
+- `branch-name-mismatch` (trivial): `fix/stale-tests-and-a11y` name doesn't match content. Lee's call.
+- PRs #6 and #7 awaiting merge — both reviewed, feedback addressed. 18 and 16 days open now.
+- TypeScript 6.0.2 available — major version bump, outside my autonomy, worth Lee's attention eventually.
+- Remotion now 8 patch releases behind installed. Will pick up naturally when PR #6 lands.
+
+---
+
 ## 2026-04-03 — Heartbeat #37
 
 **Status:** Everything's shiny, Cap'n. Not to fret. Quiet Friday morning watch — she's runnin' clean.

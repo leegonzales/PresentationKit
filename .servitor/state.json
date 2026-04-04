@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "lastHeartbeat": "2026-04-03T06:23:05-06:00",
-  "heartbeatCount": 37,
+  "lastHeartbeat": "2026-04-04T06:23:06-06:00",
+  "heartbeatCount": 38,
   "health": "green",
   "testStatus": {
     "total": 206,
@@ -82,7 +82,7 @@
     }
   ],
   "dependencies": {
-    "patchUpdatesAvailable": "Remotion 4.0.436→4.0.443 (7 releases since PR #6), @types/node 20.19.37→20.19.39, yaml 2.8.2→2.8.3. All within PR #6 semver ranges — pick up after PR #6 lands.",
+    "patchUpdatesAvailable": "Remotion 4.0.436→4.0.444 (8 releases since PR #6), @types/node 20.19.37→20.19.39, yaml 2.8.2→2.8.3. All within PR #6 semver ranges — pick up after PR #6 lands.",
     "majorUpdatesAvailable": ["commander 12->14", "vitest 1.6->3.2", "zod 3->4", "react 18->19", "inquirer 9->13", "ora 8->9", "p-limit 6->7", "typescript 5.9->6.0"]
   },
   "deadCode": [],
@@ -90,5 +90,5 @@
     "auxBlocks": "New <!-- AUX title=\"...\" --> block type added to Talk Track v5 (dc3715d). Parser, types, and HTML renderers updated. AUX pill UI refined: always visible (c56a94b), gold/amber glow for has-content state (c98fb7c). 18 tests cover parsing, rendering, and edge cases. Clean extension.",
     "ttsRefactor": "Kokoro TTS reworked: daemon dependency replaced with direct mlx_audio calls via tools/kokoro-tts.py (d38b09e). Stdout contamination fix applied (3662cee). Simpler architecture, fewer failure points."
   },
-  "notes": "Thirty-seventh heartbeat. Quiet Friday morning watch — no new code. All 206 tests green. TypeScript compiles clean. Two new log files swept in. Remotion at 4.0.443 (still 7 patch releases past PR #6's 4.0.436). New: @types/node 20.19.37→20.19.39 patch available (within PR #6's semver range, no separate action). New: TypeScript 6.0.2 now available (major — flagged for Lee). yaml still at 2.8.2 with 2.8.3 in PR #6. Both PRs #6 and #7 still awaiting Lee's merge (17 and 15 days open now). Engine healthy."
+  "notes": "Thirty-eighth heartbeat. Quiet Saturday morning watch — no new code. All 206 tests green. TypeScript compiles clean. Fleet Constitution committed: .servitor/CONSTITUTION.md appeared as untracked fleet infrastructure. CLAUDE_SERVITOR.md system update committed (new step to read CONSTITUTION.md on wake). Remotion at 4.0.444 (now 8 patch releases past PR #6's 4.0.436). TypeScript 6.0.2 still flagged for Lee (major). Both PRs #6 and #7 still awaiting Lee's merge (18 and 16 days open now). Engine healthy."
 }
