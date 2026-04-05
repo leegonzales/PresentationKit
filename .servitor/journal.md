@@ -1,5 +1,34 @@
 # Servitor Journal — PresentationKit
 
+## 2026-04-05 — Heartbeat #39
+
+**Status:** Everything's shiny, Cap'n. Not to fret. Quiet Sunday watch — she's runnin' clean.
+
+**Engine diagnostics:**
+- TypeScript compiles clean — no type errors
+- No CI configured, no beads issues open
+- PRs #6 and #7 still open, awaiting Lee's merge (19 and 17 days now)
+- Agent-mail inbox empty
+
+**What I found:**
+- No new code commits since heartbeat #38 (last heartbeat: `69dae14`)
+- Two new untracked log files from this heartbeat run — swept in
+- Remotion crept forward again: 4.0.444 → **4.0.445** (now **9 patch releases** ahead of installed 4.0.436). Still waiting on PR #6 to land.
+- `@types/node` still at 20.19.37, latest 20.19.39 — within PR #6's `^20.14.0` range, lock file picks it up on merge
+- TypeScript 6.0.2 still available (major — outside my autonomy, flagged for Lee)
+- yaml still waiting inside PR #6
+
+**Actions taken:**
+- Updated journal and state
+
+**Remaining open concerns:**
+- `branch-name-mismatch` (trivial): `fix/stale-tests-and-a11y` name doesn't match content. Lee's call.
+- PRs #6 and #7 awaiting merge — both reviewed, feedback addressed. 19 and 17 days open now.
+- TypeScript 6.0.2 available — major version bump, outside my autonomy, worth Lee's attention eventually.
+- Remotion now 9 patch releases behind installed. Will pick up naturally when PR #6 lands.
+
+---
+
 ## 2026-04-04 — Heartbeat #38
 
 **Status:** Everything's shiny, Cap'n. Not to fret. Quiet Saturday morning watch — she's runnin' clean.
@@ -1110,3 +1139,11 @@ Same four uncommitted files on `fix/stale-tests-and-a11y` (.gitignore + 3 test f
 3. Merge PR #7 for ESLint config (may need rebase)
 
 **Assessment:** Twenty-six heartbeats across six days. Same healthy engine, same clean diagnostics. Nothing new since last heartbeat — no commits, no deps, no degradation. Both PRs still clean and mergeable with review feedback awaiting attention. The branch work's been ready to land for 6 days now. She's flying real pretty. Standing by.
+
+---
+### Auto-Journal: 2026-04-04 10:23 MDT
+- **Wake reason:** heartbeat
+- **Duration:** 240m
+- **Exit:** exit code 1
+- **Commands:** git log --oneline -20 && echo "---STATUS---" && git status &..., bd ready 2>/dev/null || true && echo "---BEADS-OPEN---" && b..., npm outdated 2>/dev/null | head -20 || true, npm test 2>&1 | tail -20, git diff .servitor/CLAUDE_SERVITOR.md 2>/dev/null | head -40, cat /private/tmp/claude-501/-Users-leegonzales-Projects-leeg..., cat /private/tmp/claude-501/-Users-leegonzales-Projects-leeg..., npm test 2>&1 | tail -25, npx vitest run --reporter=verbose 2>&1 | tail -20, git add .servitor/CLAUDE_SERVITOR.md .servitor/CONSTITUTION...., git commit -m "$(cat <<'EOF', git push
+---
