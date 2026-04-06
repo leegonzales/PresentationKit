@@ -1,5 +1,34 @@
 # Servitor Journal — PresentationKit
 
+## 2026-04-06 — Heartbeat #40
+
+**Status:** Everything's shiny, Cap'n. Not to fret. Quiet Monday morning watch — she's runnin' clean.
+
+**Engine diagnostics:**
+- TypeScript compiles clean — no type errors
+- No CI configured, no beads issues open
+- PRs #6 and #7 still open, awaiting Lee's merge (20 and 18 days now)
+- Agent-mail inbox not checked (no tools available in this session)
+
+**What I found:**
+- No new code commits since heartbeat #39 (last commit: `e6fac99`)
+- Remotion crept forward again: 4.0.445 → **4.0.446** (now **10 patch releases** ahead of installed 4.0.436). Still waiting on PR #6 to land.
+- `@types/node` at 20.19.37, latest 20.19.39 — within PR #6's `^20.14.0` range, lock file picks it up on merge
+- yaml at 2.8.2, 2.8.3 waiting in PR #6
+- TypeScript 6.0.2 still available (major — outside my autonomy, flagged for Lee)
+- Two new untracked log files from this heartbeat run — swept in
+
+**Actions taken:**
+- Updated journal and state
+
+**Remaining open concerns:**
+- `branch-name-mismatch` (trivial): `fix/stale-tests-and-a11y` name doesn't match content. Lee's call.
+- PRs #6 and #7 awaiting merge — both reviewed, feedback addressed. 20 and 18 days open now.
+- TypeScript 6.0.2 available — major version bump, outside my autonomy, worth Lee's attention eventually.
+- Remotion now 10 patch releases behind installed. Will pick up naturally when PR #6 lands.
+
+---
+
 ## 2026-04-05 — Heartbeat #39
 
 **Status:** Everything's shiny, Cap'n. Not to fret. Quiet Sunday watch — she's runnin' clean.
@@ -1146,4 +1175,12 @@ Same four uncommitted files on `fix/stale-tests-and-a11y` (.gitignore + 3 test f
 - **Duration:** 240m
 - **Exit:** exit code 1
 - **Commands:** git log --oneline -20 && echo "---STATUS---" && git status &..., bd ready 2>/dev/null || true && echo "---BEADS-OPEN---" && b..., npm outdated 2>/dev/null | head -20 || true, npm test 2>&1 | tail -20, git diff .servitor/CLAUDE_SERVITOR.md 2>/dev/null | head -40, cat /private/tmp/claude-501/-Users-leegonzales-Projects-leeg..., cat /private/tmp/claude-501/-Users-leegonzales-Projects-leeg..., npm test 2>&1 | tail -25, npx vitest run --reporter=verbose 2>&1 | tail -20, git add .servitor/CLAUDE_SERVITOR.md .servitor/CONSTITUTION...., git commit -m "$(cat <<'EOF', git push
+---
+
+---
+### Auto-Journal: 2026-04-05 12:14 MDT
+- **Wake reason:** heartbeat
+- **Duration:** 1m 58s
+- **Exit:** success
+- **Commands:** git log --oneline -20, git status, gh run list --limit 5 2>/dev/null; gh pr list 2>/dev/null, bd ready 2>/dev/null; echo "---"; bd list --status=open 2>/d..., npm outdated --json 2>/dev/null | head -100, npx tsc --noEmit 2>&1 | head -20, npm outdated --json 2>/dev/null | python3 -c "import json,sy..., git add .servitor/journal.md .servitor/state.json .servitor/..., git push
 ---
